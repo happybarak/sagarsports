@@ -1,0 +1,28 @@
+@import "tailwindcss";
+@config "../tailwind.config.js";
+
+/* Tailwind 4 makes form controls transparent by default; Tailwind 3 left the
+   browser's own look. Restore that so existing forms look exactly as before.
+   Utility classes (bg-white, etc.) still win because they sit in a later layer. */
+@layer base {
+  input:where(:not([type="checkbox"], [type="radio"], [type="range"], [type="color"])),
+  select,
+  textarea {
+    background-color: revert;
+  }
+  ::file-selector-button {
+    background-color: revert;
+    border: revert;
+    border-radius: revert;
+    padding: revert;
+    margin-inline-end: revert;
+  }
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  @apply bg-brand-surface text-gray-900 font-sans antialiased;
+}
