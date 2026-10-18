@@ -17,11 +17,30 @@ const SORT_OPTIONS = [
 ];
 
 function findCategoryBySlug(categories, slug) {
+  if (!slug) return null;
+  const target = slug.toLowerCase();
   for (const category of categories) {
-    if (category.slug === slug) return category;
+    if (category.slug?.toLowerCase() === target || category.name?.toLowerCase() === target) {
+      return category;
+    }
     if (category.children?.length) {
       const found = findCategoryBySlug(category.children, slug);
       if (found) return found;
+    }
+  }
+  return null;
+}
+
+function findParentCategory(categories, childSlug) {
+  if (!childSlug) return null;
+  const target = childSlug.toLowerCase();
+  for (const cat of categories) {
+    if (
+      cat.children?.some(
+        (child) => child.slug?.toLowerCase() === target || child.name?.toLowerCase() === target
+      )
+    ) {
+      return cat;
     }
   }
   return null;
@@ -39,7 +58,9 @@ function ProductListingPage() {
   const [isSortOpen, setIsSortOpen] = useState(false);
   const sortMenuRef = useRef(null);
 
+  const activeCategorySlug = categorySlug || "";
   const activeCategory = categorySlug ? findCategoryBySlug(categoryTree, categorySlug) : null;
+  const parentCategory = categorySlug ? findParentCategory(categoryTree, categorySlug) : null;
   const searchQuery = searchParams.get("search") || "";
 
   const filters = useMemo(
@@ -117,14 +138,24 @@ function ProductListingPage() {
   const currentSortOption =
     SORT_OPTIONS.find((opt) => opt.value === filters.ordering) || SORT_OPTIONS[0];
 
+  const formatCategoryName = (slug) =>
+    slug ? slug.replace(/[-_]/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()) : "";
+
   const pageTitle = searchQuery
     ? `Search: "${searchQuery}"`
-    : activeCategory?.name || "All Products";
+    : activeCategory?.name || (categorySlug ? formatCategoryName(categorySlug) : "All Products");
 
   const breadcrumbItems = [
     { label: "Home", to: "/" },
-    ...(activeCategory
+    ...(parentCategory
+      ? [
+          { label: parentCategory.name, to: `/category/${parentCategory.slug}` },
+          { label: activeCategory?.name || formatCategoryName(categorySlug) },
+        ]
+      : activeCategory
       ? [{ label: activeCategory.name, to: `/category/${activeCategory.slug}` }]
+      : categorySlug
+      ? [{ label: formatCategoryName(categorySlug) }]
       : [{ label: "Products" }]),
   ];
 
@@ -210,32 +241,64 @@ function ProductListingPage() {
 
       {/* Horizontal Category Navigation Bar (Matching Festive Edit / Snitch style) */}
       {categoryTree.length > 0 && (
-        <div className="mb-6 border-b border-gray-200">
-          <div className="flex items-center gap-6 overflow-x-auto pb-2 scrollbar-none">
+        <div className="mb-6 space-y-2.5 border-b border-gray-200 pb-2">
+          <div className="flex items-center gap-6 overflow-x-auto pb-1 scrollbar-none">
             <Link
               to="/products"
-              className={`shrink-0 text-xs font-bold uppercase tracking-wider transition ${
+              className={`shrink-0 text-xs font-bold uppercase tracking-wider transition pb-2 ${
                 !categorySlug
-                  ? "border-b-2 border-black pb-2 text-black"
-                  : "pb-2 text-gray-500 hover:text-black"
+                  ? "border-b-2 border-black text-black font-extrabold"
+                  : "text-gray-500 hover:text-black"
               }`}
             >
               All
             </Link>
-            {categoryTree.map((category) => (
-              <Link
-                key={category.id}
-                to={`/category/${category.slug}`}
-                className={`shrink-0 text-xs font-bold uppercase tracking-wider transition ${
-                  activeCategorySlug === category.slug
-                    ? "border-b-2 border-black pb-2 text-black"
-                    : "pb-2 text-gray-500 hover:text-black"
-                }`}
-              >
-                {category.name}
-              </Link>
-            ))}
+            {categoryTree.map((category) => {
+              const isSelected =
+                activeCategorySlug.toLowerCase() === category.slug?.toLowerCase() ||
+                category.children?.some(
+                  (child) => child.slug?.toLowerCase() === activeCategorySlug.toLowerCase()
+                );
+              return (
+                <Link
+                  key={category.id}
+                  to={`/category/${category.slug}`}
+                  className={`shrink-0 text-xs font-bold uppercase tracking-wider transition pb-2 ${
+                    isSelected
+                      ? "border-b-2 border-black text-black font-extrabold"
+                      : "text-gray-500 hover:text-black"
+                  }`}
+                >
+                  {category.name}
+                </Link>
+              );
+            })}
           </div>
+
+          {/* Subcategories pill bar when a parent category with children is active */}
+          {(activeCategory?.children?.length > 0 || parentCategory?.children?.length > 0) && (
+            <div className="flex items-center gap-2 overflow-x-auto pt-1 pb-1 scrollbar-none">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">
+                Explore:
+              </span>
+              {(activeCategory?.children?.length > 0
+                ? activeCategory.children
+                : parentCategory?.children || []
+              ).map((child) => (
+                <Link
+                  key={child.id}
+                  to={`/category/${child.slug}`}
+                  className={`rounded-full px-3 py-1 text-xs transition ${
+                    activeCategorySlug.toLowerCase() === child.slug?.toLowerCase()
+                      ? "bg-black font-semibold text-white"
+                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                  }`}
+                >
+                  {child.name}
+                </Link>
+              ))}
+            </div>
+          )}
         </div>
       )}
 

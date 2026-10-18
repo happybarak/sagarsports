@@ -34,7 +34,18 @@ class CategoryDetailView(generics.RetrieveAPIView):
     serializer_class = CategorySerializer
     permission_classes = [AllowAny]
     lookup_field = "slug"
-    queryset = Category.objects.filter(is_active=True)
+
+    def get_object(self):
+        slug = self.kwargs.get(self.lookup_field)
+        obj = (
+            Category.objects.filter(slug__iexact=slug, is_active=True).first()
+            or Category.objects.filter(name__iexact=slug, is_active=True).first()
+            or Category.objects.filter(name__iexact=slug.replace("-", " "), is_active=True).first()
+        )
+        if not obj:
+            from rest_framework.exceptions import NotFound
+            raise NotFound("Category not found.")
+        return obj
 
 
 class AdminCategoryViewSet(viewsets.ModelViewSet):

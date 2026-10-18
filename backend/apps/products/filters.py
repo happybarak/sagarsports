@@ -24,9 +24,16 @@ class ProductFilter(django_filters.FilterSet):
         fields = ["featured", "best_seller", "new_arrival", "category", "brand"]
 
     def filter_category(self, queryset, name, value):
-        try:
-            category = Category.objects.get(slug=value)
-        except Category.DoesNotExist:
+        if not value:
+            return queryset
+
+        # Match case-insensitively by slug, name, or slugified representation
+        category = (
+            Category.objects.filter(slug__iexact=value).first()
+            or Category.objects.filter(name__iexact=value).first()
+            or Category.objects.filter(name__iexact=value.replace("-", " ")).first()
+        )
+        if not category:
             return queryset.none()
 
         slugs = [category.slug] + list(
