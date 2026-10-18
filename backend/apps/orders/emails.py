@@ -1,4 +1,5 @@
 import logging
+import threading
 from django.conf import settings
 from django.core.mail import EmailMultiAlternatives
 
@@ -10,9 +11,30 @@ def send_order_confirmation_emails(order):
     Sends:
     1. Branded Order Confirmation Email to the customer (HTML + text).
     2. Instant New-Order Alert to the store admin/owner.
-    Wrapped in try/except with logging so email delivery never blocks or crashes
-    the checkout response if SMTP credentials are temporarily unavailable.
+    Dispatched in a background thread so that SMTP connection handshakes or
+    network latency never blocks the HTTP checkout response or causes browser timeouts.
     """
+    order_id = order.id
+    thread = threading.Thread(
+        target=_dispatch_emails_async,
+        args=(order_id,),
+        daemon=True,
+    )
+    thread.start()
+
+
+def _dispatch_emails_async(order_id):
+    try:
+        from apps.orders.models import Order
+        order = (
+            Order.objects.select_related("user", "shipping_address")
+            .prefetch_related("items")
+            .get(id=order_id)
+        )
+    except Exception as exc:
+        logger.error("Failed to load order %s for background email sending: %s", order_id, exc)
+        return
+
     try:
         _send_customer_confirmation(order)
     except Exception as exc:

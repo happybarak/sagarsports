@@ -15,12 +15,12 @@ SECRET_KEY = config("SECRET_KEY")
 DEBUG = config("DEBUG", default=False, cast=bool)
 ALLOWED_HOSTS = config(
     "ALLOWED_HOSTS",
-    default="localhost,127.0.0.1,sagarsports.shop,www.sagarsports.shop,api.sagarsports.shop",
+    default="localhost,127.0.0.1,sagarsports.shop,www.sagarsports.shop,api.sagarsports.shop,.onrender.com",
     cast=Csv(),
 )
 CSRF_TRUSTED_ORIGINS = config(
     "CSRF_TRUSTED_ORIGINS",
-    default="https://sagarsports.shop,https://www.sagarsports.shop,https://api.sagarsports.shop,http://localhost:5173,http://127.0.0.1:5173",
+    default="https://sagarsports.shop,https://www.sagarsports.shop,https://api.sagarsports.shop,https://*.onrender.com,http://localhost:5173,http://127.0.0.1:5173",
     cast=Csv(),
 )
 
@@ -207,21 +207,40 @@ CORS_ALLOWED_ORIGINS = config(
     default="http://localhost:5173,http://127.0.0.1:5173,https://sagarsports.shop,https://www.sagarsports.shop",
     cast=Csv(),
 )
+CORS_ALLOWED_ORIGIN_REGEXES = [
+    r"^https://.*\.sagarsports\.shop$",
+    r"^https://.*\.onrender\.com$",
+    r"^https://.*\.vercel\.app$",
+]
 CORS_ALLOW_CREDENTIALS = True
 
 # ---------------------------------------------------------------------------
 # Email (order notifications & password reset)
 # ---------------------------------------------------------------------------
-EMAIL_BACKEND = config(
-    "EMAIL_BACKEND", default="django.core.mail.backends.console.EmailBackend"
-)
 EMAIL_HOST = config("EMAIL_HOST", default="")
 EMAIL_PORT = config("EMAIL_PORT", default=587, cast=int)
-EMAIL_USE_TLS = config("EMAIL_USE_TLS", default=True, cast=bool)
+EMAIL_USE_TLS = config("EMAIL_USE_TLS", default=(EMAIL_PORT == 587), cast=bool)
+EMAIL_USE_SSL = config("EMAIL_USE_SSL", default=(EMAIL_PORT == 465), cast=bool)
 EMAIL_HOST_USER = config("EMAIL_HOST_USER", default="")
-EMAIL_HOST_PASSWORD = config("EMAIL_HOST_PASSWORD", default="")
+_raw_email_pw = config("EMAIL_HOST_PASSWORD", default="")
+EMAIL_HOST_PASSWORD = _raw_email_pw.replace(" ", "").strip()
+EMAIL_TIMEOUT = config("EMAIL_TIMEOUT", default=10, cast=int)
+
+EMAIL_BACKEND = config(
+    "EMAIL_BACKEND",
+    default=(
+        "django.core.mail.backends.smtp.EmailBackend"
+        if EMAIL_HOST
+        else "django.core.mail.backends.console.EmailBackend"
+    ),
+)
 DEFAULT_FROM_EMAIL = config(
-    "DEFAULT_FROM_EMAIL", default="Sagar Sports <orders@sagarsports.shop>"
+    "DEFAULT_FROM_EMAIL",
+    default=(
+        f"Sagar Sports <{EMAIL_HOST_USER}>"
+        if EMAIL_HOST_USER
+        else "Sagar Sports <orders@sagarsports.shop>"
+    ),
 )
 ADMIN_NOTIFICATION_EMAIL = config(
     "ADMIN_NOTIFICATION_EMAIL", default="orders@sagarsports.shop"
@@ -235,7 +254,7 @@ FRONTEND_URL = config("FRONTEND_URL", default="https://sagarsports.shop")
 # ---------------------------------------------------------------------------
 if not DEBUG:
     SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
-    SECURE_SSL_REDIRECT = config("SECURE_SSL_REDIRECT", default=True, cast=bool)
+    SECURE_SSL_REDIRECT = config("SECURE_SSL_REDIRECT", default=False, cast=bool)
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
     SECURE_BROWSER_XSS_FILTER = True
