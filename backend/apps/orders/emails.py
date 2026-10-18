@@ -223,19 +223,39 @@ https://sagarsports.shop
     """
 
     from_email = getattr(settings, "DEFAULT_FROM_EMAIL", "Sagar Sports <orders@sagarsports.shop>")
-    msg = EmailMultiAlternatives(subject, text_body, from_email, [customer_email])
+    admin_reply_raw = getattr(settings, "ADMIN_NOTIFICATION_EMAIL", None)
+    reply_to = (
+        [r.strip() for r in admin_reply_raw.split(",") if r.strip()]
+        if admin_reply_raw
+        else None
+    )
+
+    msg = EmailMultiAlternatives(
+        subject, text_body, from_email, [customer_email], reply_to=reply_to
+    )
     msg.attach_alternative(html_body, "text/html")
     msg.send(fail_silently=True)
     logger.info("Order confirmation email dispatched to %s for order %s", customer_email, order.id)
 
 
 def _send_admin_new_order_alert(order):
-    admin_email = getattr(
+    admin_emails_raw = getattr(
         settings,
         "ADMIN_NOTIFICATION_EMAIL",
         getattr(settings, "DEFAULT_FROM_EMAIL", "orders@sagarsports.shop"),
     )
-    if not admin_email:
+    if not admin_emails_raw:
+        return
+
+    # Support multiple comma-separated emails e.g. "owner@gmail.com, manager@gmail.com"
+    if isinstance(admin_emails_raw, str):
+        admin_recipients = [e.strip() for e in admin_emails_raw.split(",") if e.strip()]
+    elif isinstance(admin_emails_raw, (list, tuple)):
+        admin_recipients = list(admin_emails_raw)
+    else:
+        admin_recipients = [str(admin_emails_raw)]
+
+    if not admin_recipients:
         return
 
     subject = (
@@ -281,6 +301,6 @@ View in Admin Panel:
 """
 
     from_email = getattr(settings, "DEFAULT_FROM_EMAIL", "Sagar Sports <orders@sagarsports.shop>")
-    msg = EmailMultiAlternatives(subject, text_body, from_email, [admin_email])
+    msg = EmailMultiAlternatives(subject, text_body, from_email, admin_recipients)
     msg.send(fail_silently=True)
-    logger.info("Admin alert dispatched for order %s", order.id)
+    logger.info("Admin alert dispatched for order %s to %s", order.id, admin_recipients)
