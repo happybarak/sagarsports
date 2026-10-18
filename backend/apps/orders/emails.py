@@ -234,7 +234,7 @@ https://sagarsports.shop
         subject, text_body, from_email, [customer_email], reply_to=reply_to
     )
     msg.attach_alternative(html_body, "text/html")
-    msg.send(fail_silently=True)
+    msg.send(fail_silently=False)
     logger.info("Order confirmation email dispatched to %s for order %s", customer_email, order.id)
 
 
@@ -302,5 +302,5 @@ View in Admin Panel:
 
     from_email = getattr(settings, "DEFAULT_FROM_EMAIL", "Sagar Sports <orders@sagarsports.shop>")
     msg = EmailMultiAlternatives(subject, text_body, from_email, admin_recipients)
-    msg.send(fail_silently=True)
+    msg.send(fail_silently=False)
     logger.info("Admin alert dispatched for order %s to %s", order.id, admin_recipients)
