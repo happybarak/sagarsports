@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { FiArrowDown, FiCheck, FiChevronDown, FiSliders, FiX } from "react-icons/fi";
+import { FiCheck, FiX } from "react-icons/fi";
 import { useDispatch, useSelector } from "react-redux";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 
@@ -160,59 +160,49 @@ function ProductListingPage() {
   ];
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-6 md:px-6">
+    <div className="mx-auto max-w-7xl px-4 py-4 md:px-6">
       <Breadcrumb items={breadcrumbItems} />
 
-      {/* Main Header Row: Title & Action Buttons (FILTERS & SORT BY) */}
-      <div className="mb-4 flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-        <div>
-          <h1 className="text-2xl font-black uppercase tracking-wider text-black sm:text-3xl">
+      {/* Sleek Minimal Header: Only Category on Left, Compact SORT | FILTER on Right */}
+      <div className="mb-4 flex items-center justify-between border-b border-gray-200 pb-3">
+        {/* Top Left Corner: ONLY SELECTED CATEGORY NAME */}
+        <div className="flex items-baseline gap-2">
+          <h1 className="text-xl sm:text-2xl font-bold uppercase tracking-wider text-black">
             {pageTitle}
           </h1>
-          <p className="mt-0.5 text-xs uppercase tracking-wider text-gray-500">
-            {listing.status === "succeeded" ? `${listing.count} products found` : "Loading products..."}
-          </p>
+          {listing.status === "succeeded" && (
+            <span className="text-xs font-normal text-gray-400">({listing.count})</span>
+          )}
         </div>
 
-        {/* Action Controls: Filters button + Sort Dropdown */}
-        <div className="flex items-center gap-3 self-end sm:self-auto">
-          {/* FILTERS Button */}
-          <button
-            type="button"
-            onClick={() => setIsFilterOpen(true)}
-            className={`inline-flex items-center gap-2 rounded-md border px-4 py-2 text-xs font-bold uppercase tracking-wider transition ${
-              activeFilterCount > 0
-                ? "border-black bg-black text-white"
-                : "border-gray-300 bg-white text-black hover:border-black"
-            }`}
-          >
-            <FiSliders size={14} />
-            <span>Filters</span>
-            {activeFilterCount > 0 && (
-              <span className="flex h-4 w-4 items-center justify-center rounded-full bg-white text-[10px] font-bold text-black">
-                {activeFilterCount}
-              </span>
-            )}
-          </button>
-
-          {/* SORT BY Menu */}
+        {/* Top Right Corner: Small SORT and FILTER buttons matching user image */}
+        <div className="flex items-center gap-3 sm:gap-4 text-xs sm:text-sm font-normal uppercase tracking-wider text-black">
+          {/* SORT Menu */}
           <div className="relative" ref={sortMenuRef}>
             <button
               type="button"
               onClick={() => setIsSortOpen((prev) => !prev)}
-              className="inline-flex items-center gap-2 rounded-md border border-gray-300 bg-white px-4 py-2 text-xs font-bold uppercase tracking-wider text-black hover:border-black transition"
+              className="inline-flex items-center gap-1.5 py-1 text-black hover:text-gray-600 transition"
+              aria-label="Sort products"
             >
-              <FiArrowDown size={14} />
-              <span>Sort: {currentSortOption.label}</span>
-              <FiChevronDown
-                size={14}
-                className={`transition-transform duration-200 ${isSortOpen ? "rotate-180" : ""}`}
-              />
+              <svg
+                className="h-4 w-4"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M7 4v16m0 0l-4-4m4 4l4-4" />
+                <path d="M17 20V4m0 0l-4 4m4-4l4 4" />
+              </svg>
+              <span>SORT</span>
             </button>
 
             {isSortOpen && (
-              <div className="absolute right-0 z-30 mt-2 w-56 rounded-lg border border-gray-100 bg-white p-1.5 shadow-xl">
-                <div className="border-b border-gray-100 px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-gray-400">
+              <div className="absolute right-0 z-30 mt-2 w-52 rounded-md border border-gray-100 bg-white p-1.5 shadow-xl">
+                <div className="border-b border-gray-100 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-gray-400">
                   Sort By
                 </div>
                 {SORT_OPTIONS.map((option) => (
@@ -223,7 +213,7 @@ function ProductListingPage() {
                       updateFilters({ ordering: option.value });
                       setIsSortOpen(false);
                     }}
-                    className={`flex w-full items-center justify-between rounded-md px-3 py-2 text-left text-xs transition ${
+                    className={`flex w-full items-center justify-between rounded px-3 py-2 text-left text-xs transition ${
                       filters.ordering === option.value
                         ? "bg-gray-100 font-bold text-black"
                         : "text-gray-700 hover:bg-gray-50"
@@ -236,71 +226,42 @@ function ProductListingPage() {
               </div>
             )}
           </div>
+
+          {/* Thin Vertical Separator Line */}
+          <span className="h-4 w-px bg-gray-300" aria-hidden="true" />
+
+          {/* FILTER Button */}
+          <button
+            type="button"
+            onClick={() => setIsFilterOpen(true)}
+            className="inline-flex items-center gap-1.5 py-1 text-black hover:text-gray-600 transition"
+            aria-label="Open filter drawer"
+          >
+            <svg
+              className="h-4 w-4"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <line x1="4" y1="6" x2="20" y2="6" />
+              <line x1="4" y1="12" x2="20" y2="12" />
+              <line x1="4" y1="18" x2="20" y2="18" />
+              <circle cx="8" cy="6" r="2" fill="white" stroke="currentColor" />
+              <circle cx="16" cy="12" r="2" fill="white" stroke="currentColor" />
+              <circle cx="10" cy="18" r="2" fill="white" stroke="currentColor" />
+            </svg>
+            <span>FILTER</span>
+            {activeFilterCount > 0 && (
+              <span className="flex h-4 w-4 items-center justify-center rounded-full bg-black text-[10px] font-bold text-white">
+                {activeFilterCount}
+              </span>
+            )}
+          </button>
         </div>
       </div>
-
-      {/* Horizontal Category Navigation Bar (Matching Festive Edit / Snitch style) */}
-      {categoryTree.length > 0 && (
-        <div className="mb-6 space-y-2.5 border-b border-gray-200 pb-2">
-          <div className="flex items-center gap-6 overflow-x-auto pb-1 scrollbar-none">
-            <Link
-              to="/products"
-              className={`shrink-0 text-xs font-bold uppercase tracking-wider transition pb-2 ${
-                !categorySlug
-                  ? "border-b-2 border-black text-black font-extrabold"
-                  : "text-gray-500 hover:text-black"
-              }`}
-            >
-              All
-            </Link>
-            {categoryTree.map((category) => {
-              const isSelected =
-                activeCategorySlug.toLowerCase() === category.slug?.toLowerCase() ||
-                category.children?.some(
-                  (child) => child.slug?.toLowerCase() === activeCategorySlug.toLowerCase()
-                );
-              return (
-                <Link
-                  key={category.id}
-                  to={`/category/${category.slug}`}
-                  className={`shrink-0 text-xs font-bold uppercase tracking-wider transition pb-2 ${
-                    isSelected
-                      ? "border-b-2 border-black text-black font-extrabold"
-                      : "text-gray-500 hover:text-black"
-                  }`}
-                >
-                  {category.name}
-                </Link>
-              );
-            })}
-          </div>
-
-          {/* Subcategories pill bar when a parent category with children is active */}
-          {(activeCategory?.children?.length > 0 || parentCategory?.children?.length > 0) && (
-            <div className="flex items-center gap-2 overflow-x-auto pt-1 pb-1 scrollbar-none">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">
-                Explore:
-              </span>
-              {(activeCategory?.children?.length > 0
-                ? activeCategory.children
-                : parentCategory?.children || []
-              ).map((child) => (
-                <Link
-                  key={child.id}
-                  to={`/category/${child.slug}`}
-                  className={`rounded-full px-3 py-1 text-xs transition ${
-                    activeCategorySlug.toLowerCase() === child.slug?.toLowerCase()
-                      ? "bg-black font-semibold text-white"
-                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                  }`}
-                >
-                  {child.name}
-                </Link>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
 
       {/* Active Filter Chips / Pills (if any filter active) */}
       {activeFilterCount > 0 && (
