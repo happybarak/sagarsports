@@ -15,6 +15,10 @@ function Footer({ categories }) {
     setNewsletterSubmitted(true);
   };
 
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, left: 0, behavior: "smooth" });
+  };
+
   return (
     <footer className="mt-16 bg-brand text-white">
       <div className="mx-auto grid max-w-7xl grid-cols-1 gap-10 px-6 py-12 sm:grid-cols-2 lg:grid-cols-4">
@@ -63,7 +67,11 @@ function Footer({ categories }) {
           <ul className="flex flex-col gap-2 text-sm text-white/80">
             {categories.slice(0, 5).map((category) => (
               <li key={category.id}>
-                <Link to={`/category/${category.slug}`} className="hover:text-white">
+                <Link
+                  to={`/category/${category.slug}`}
+                  onClick={scrollToTop}
+                  className="hover:text-white"
+                >
                   {category.name}
                 </Link>
               </li>
@@ -76,12 +84,12 @@ function Footer({ categories }) {
             Company
           </h4>
           <ul className="flex flex-col gap-2 text-sm text-white/80">
-            <li><Link to="/about" className="hover:text-white">About Us</Link></li>
-            <li><Link to="/contact" className="hover:text-white">Contact Us</Link></li>
-            <li><Link to="/returns-exchanges" className="hover:text-white">Return &amp; Exchange Policy</Link></li>
-            <li><Link to="/faq" className="hover:text-white">FAQs</Link></li>
-            <li><Link to="/privacy" className="hover:text-white">Privacy Policy</Link></li>
-            <li><Link to="/terms" className="hover:text-white">Terms &amp; Conditions</Link></li>
+            <li><Link to="/about" onClick={scrollToTop} className="hover:text-white">About Us</Link></li>
+            <li><Link to="/contact" onClick={scrollToTop} className="hover:text-white">Contact Us</Link></li>
+            <li><Link to="/returns-exchanges" onClick={scrollToTop} className="hover:text-white">Return &amp; Exchange Policy</Link></li>
+            <li><Link to="/faq" onClick={scrollToTop} className="hover:text-white">FAQs</Link></li>
+            <li><Link to="/privacy" onClick={scrollToTop} className="hover:text-white">Privacy Policy</Link></li>
+            <li><Link to="/terms" onClick={scrollToTop} className="hover:text-white">Terms &amp; Conditions</Link></li>
           </ul>
 
           <div className="mt-6">
@@ -95,6 +103,13 @@ function Footer({ categories }) {
               <FiMapPin className="mt-0.5 shrink-0" size={16} />
               <span>Sagar Sports, Kharkhoda (131402), Haryana, India</span>
             </a>
+          </div>
+
+          <div className="mt-4 border-t border-white/10 pt-3 text-xs text-white/60">
+            <p className="font-semibold text-white/80">Grievance Redressal:</p>
+            <p>Officer: Sagar Sports Redressal Desk</p>
+            <p>Email: <a href="mailto:orders@sagarsports.shop" className="underline hover:text-white">orders@sagarsports.shop</a></p>
+            <p>Phone: <a href={`tel:${PHONE_NUMBER}`} className="underline hover:text-white">{PHONE_NUMBER}</a></p>
           </div>
         </div>
 
@@ -134,7 +149,7 @@ function Footer({ categories }) {
       </div>
 
       <div className="border-t border-white/10 py-4 text-center text-xs text-white/50">
-        © {new Date().getFullYear()} SagarSports. All rights reserved.
+        © {new Date().getFullYear()} SagarSports. All rights reserved. &bull; 100% Made in India
       </div>
     </footer>
   );

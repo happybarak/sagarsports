@@ -32,9 +32,9 @@ export const initiatePayment = createAsyncThunk(
 
 export const confirmPayment = createAsyncThunk(
   "payments/confirm",
-  async ({ orderId, claimToken }, { rejectWithValue }) => {
+  async (payload, { rejectWithValue }) => {
     try {
-      return await paymentService.confirmPayment(orderId, claimToken);
+      return await paymentService.confirmPayment(payload);
     } catch (error) {
       return rejectWithValue(extractErrorMessage(error));
     }

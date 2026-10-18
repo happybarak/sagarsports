@@ -332,6 +332,10 @@ function ProductDetailPage() {
               <dd className="text-gray-700">{product.sku}</dd>
               <dt className="text-gray-500">Category</dt>
               <dd className="text-gray-700">{product.category.name}</dd>
+              <dt className="text-gray-500">Country of Origin</dt>
+              <dd className="text-gray-700">India</dd>
+              <dt className="text-gray-500">Manufacturer</dt>
+              <dd className="text-gray-700">Sagar Sports, Kharkhoda (131402), Haryana</dd>
             </dl>
           </div>
         </div>

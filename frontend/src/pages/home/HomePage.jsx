@@ -75,9 +75,9 @@ function PromoBanner() {
     <section className="mx-auto max-w-7xl px-4 md:px-6">
       <div className="flex flex-col items-center justify-between gap-4 rounded-xl bg-brand-accent/10 px-6 py-8 text-center sm:flex-row sm:text-left">
         <div>
-          <h3 className="text-lg font-bold text-brand">Upgrade your setup this month</h3>
+          <h3 className="text-lg font-bold text-brand">Built for performance and competition</h3>
           <p className="text-sm text-gray-600">
-            Selected laptops and accessories at their lowest prices yet.
+            Quality sports gear and apparel crafted in our own factory at direct prices.
           </p>
         </div>
         <Link

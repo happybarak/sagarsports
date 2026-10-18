@@ -50,11 +50,26 @@ const GUEST_REQUIRED_FIELDS = [
   "postal_code",
 ];
 
+const loadRazorpayScript = () => {
+  return new Promise((resolve) => {
+    if (window.Razorpay) {
+      resolve(true);
+      return;
+    }
+    const script = document.createElement("script");
+    script.src = "https://checkout.razorpay.com/v1/checkout.js";
+    script.async = true;
+    script.onload = () => resolve(true);
+    script.onerror = () => resolve(false);
+    document.body.appendChild(script);
+  });
+};
+
 function CheckoutPage() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
-  const { isAuthenticated } = useSelector((state) => state.auth);
+  const { isAuthenticated, user } = useSelector((state) => state.auth);
   const { items: cartItems, status: cartStatus } = useSelector((state) => state.cart);
   const { items: addresses, status: addressStatus } = useSelector((state) => state.addresses);
 
@@ -146,23 +161,101 @@ function CheckoutPage() {
       return;
     }
 
-    const confirmResult = await dispatch(confirmPayment({ orderId: order.id, claimToken }));
-    if (!confirmPayment.fulfilled.match(confirmResult)) {
-      setPlaceOrderError(confirmResult.payload || "Payment could not be confirmed.");
+    const initiateData = initiateResult.payload;
+
+    const finalizeOrder = async () => {
+      if (isAuthenticated) {
+        await dispatch(fetchCart());
+        navigate(`/orders/${order.id}`);
+      } else {
+        // Guest cart lived only in localStorage — clear it directly and
+        // carry the claim_token in the URL so the confirmation page can
+        // access this specific order without an account.
+        cartStorage.clear();
+        await dispatch(fetchCart());
+        navigate(`/orders/${order.id}?claim_token=${claimToken}`);
+      }
+    };
+
+    // If Cash on Delivery or local mock testing mode
+    if (initiateData.method === "cod" || initiateData.is_mock) {
+      const confirmResult = await dispatch(confirmPayment({ orderId: order.id, claimToken }));
+      if (!confirmPayment.fulfilled.match(confirmResult)) {
+        setPlaceOrderError(confirmResult.payload || "Order could not be confirmed.");
+        setIsPlacingOrder(false);
+        return;
+      }
+      await finalizeOrder();
+      return;
+    }
+
+    // Live Razorpay payment modal
+    const isScriptLoaded = await loadRazorpayScript();
+    if (!isScriptLoaded) {
+      setPlaceOrderError("Payment gateway could not be loaded. Please check your internet connection.");
       setIsPlacingOrder(false);
       return;
     }
 
-    if (isAuthenticated) {
-      await dispatch(fetchCart());
-      navigate(`/orders/${order.id}`);
-    } else {
-      // Guest cart lived only in localStorage — clear it directly and
-      // carry the claim_token in the URL so the confirmation page can
-      // access this specific order without an account.
-      cartStorage.clear();
-      await dispatch(fetchCart());
-      navigate(`/orders/${order.id}?claim_token=${claimToken}`);
+    const customerName =
+      initiateData.customer_name ||
+      (isAuthenticated ? `${user?.first_name || ""} ${user?.last_name || ""}`.trim() : guestForm.full_name);
+    const customerEmail =
+      initiateData.customer_email || (isAuthenticated ? user?.email : guestForm.email);
+    const customerPhone =
+      initiateData.customer_phone || (isAuthenticated ? "" : guestForm.phone);
+
+    const options = {
+      key: initiateData.razorpay_key_id,
+      amount: initiateData.amount,
+      currency: initiateData.currency || "INR",
+      name: "Sagar Sports",
+      description: `Order #${initiateData.order_number}`,
+      image: "/sagar-sports-icon.png",
+      order_id: initiateData.razorpay_order_id,
+      prefill: {
+        name: customerName,
+        email: customerEmail,
+        contact: customerPhone,
+      },
+      theme: {
+        color: "#111827",
+      },
+      handler: async function (response) {
+        const confirmResult = await dispatch(
+          confirmPayment({
+            orderId: order.id,
+            claimToken,
+            razorpayPaymentId: response.razorpay_payment_id,
+            razorpayOrderId: response.razorpay_order_id,
+            razorpaySignature: response.razorpay_signature,
+          })
+        );
+        if (!confirmPayment.fulfilled.match(confirmResult)) {
+          setPlaceOrderError(confirmResult.payload || "Payment verification failed.");
+          setIsPlacingOrder(false);
+          return;
+        }
+        await finalizeOrder();
+      },
+      modal: {
+        ondismiss: function () {
+          setIsPlacingOrder(false);
+          setPlaceOrderError("Payment was cancelled. You can retry placing your order anytime.");
+        },
+      },
+    };
+
+    try {
+      const rzp = new window.Razorpay(options);
+      rzp.on("payment.failed", function (response) {
+        setPlaceOrderError(response.error?.description || "Payment failed. Please try again.");
+        setIsPlacingOrder(false);
+      });
+      rzp.open();
+    } catch (err) {
+      setPlaceOrderError("Failed to open Razorpay payment window. Please try again.");
+      setIsPlacingOrder(false);
     }
   };
 
@@ -393,10 +486,10 @@ function CheckoutPage() {
                   disabled={isPlacingOrder}
                   className="mr-2"
                 />
-                <span className="font-medium text-gray-800">Online Payment</span>
+                <span className="font-medium text-gray-800">Online Payment (UPI, Cards, Netbanking)</span>
                 <p className="mt-1 text-xs text-gray-500">
-                  Demo checkout — no real payment is processed and no card details are
-                  collected. Clicking &quot;Place Order&quot; simulates a successful payment.
+                  Instant secure payment via Razorpay. Supports UPI (Google Pay, PhonePe, Paytm),
+                  Credit/Debit Cards, and Netbanking.
                 </p>
               </label>
               <label

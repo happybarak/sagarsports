@@ -9,7 +9,7 @@ from apps.users.models import Address, User
 
 
 def generate_order_number():
-    return f"NVR-{uuid.uuid4().hex[:10].upper()}"
+    return f"SGS-{uuid.uuid4().hex[:10].upper()}"
 
 
 class Order(TimeStampedModel):

@@ -178,11 +178,13 @@ class PasswordResetRequestView(APIView):
             token = default_token_generator.make_token(user)
             reset_url = f"{settings.FRONTEND_URL}/reset-password/{uid}/{token}/"
             send_mail(
-                subject="Reset your Novaris password",
+                subject="Reset your Sagar Sports password",
                 message=(
                     f"Hi {user.first_name or user.email},\n\n"
-                    f"Click the link below to reset your password:\n{reset_url}\n\n"
-                    "If you didn't request this, you can safely ignore this email."
+                    f"We received a request to reset your password for Sagar Sports.\n\n"
+                    f"Click the link below to set a new password:\n{reset_url}\n\n"
+                    "If you didn't request this, you can safely ignore this email.\n\n"
+                    "— Sagar Sports Team\nhttps://sagarsports.shop"
                 ),
                 from_email=settings.DEFAULT_FROM_EMAIL,
                 recipient_list=[user.email],

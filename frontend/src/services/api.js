@@ -2,21 +2,27 @@ import axios from "axios";
 
 const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
 
-const ACCESS_TOKEN_KEY = "novaris_access_token";
-const REFRESH_TOKEN_KEY = "novaris_refresh_token";
+const ACCESS_TOKEN_KEY = "sagarsports_access_token";
+const REFRESH_TOKEN_KEY = "sagarsports_refresh_token";
 
 export const tokenStorage = {
-  getAccessToken: () => localStorage.getItem(ACCESS_TOKEN_KEY),
-  getRefreshToken: () => localStorage.getItem(REFRESH_TOKEN_KEY),
+  getAccessToken: () =>
+    localStorage.getItem(ACCESS_TOKEN_KEY) || localStorage.getItem("novaris_access_token"),
+  getRefreshToken: () =>
+    localStorage.getItem(REFRESH_TOKEN_KEY) || localStorage.getItem("novaris_refresh_token"),
   setTokens: (access, refresh) => {
     localStorage.setItem(ACCESS_TOKEN_KEY, access);
     if (refresh) {
       localStorage.setItem(REFRESH_TOKEN_KEY, refresh);
     }
+    localStorage.removeItem("novaris_access_token");
+    localStorage.removeItem("novaris_refresh_token");
   },
   clearTokens: () => {
     localStorage.removeItem(ACCESS_TOKEN_KEY);
     localStorage.removeItem(REFRESH_TOKEN_KEY);
+    localStorage.removeItem("novaris_access_token");
+    localStorage.removeItem("novaris_refresh_token");
   },
 };
 

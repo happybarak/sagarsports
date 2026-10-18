@@ -4,6 +4,7 @@ import { Route, Routes } from "react-router-dom";
 
 import AdminLayout from "./components/admin/AdminLayout";
 import Layout from "./components/layout/Layout";
+import ScrollToTop from "./components/common/ScrollToTop";
 import { fetchCurrentUser } from "./redux/slices/authSlice";
 import { fetchCart } from "./redux/slices/cartSlice";
 import { fetchWishlist } from "./redux/slices/wishlistSlice";
@@ -62,7 +63,9 @@ function App() {
   }, [dispatch]);
 
   return (
-    <Routes>
+    <>
+      <ScrollToTop />
+      <Routes>
       <Route element={<Layout />}>
         <Route path="/" element={<HomePage />} />
         <Route path="/about" element={<AboutPage />} />
@@ -116,6 +119,7 @@ function App() {
         </Route>
       </Route>
     </Routes>
+    </>
   );
 }
 

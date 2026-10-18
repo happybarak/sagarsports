@@ -7,7 +7,7 @@ from apps.common.models import TimeStampedModel
 
 class UserManager(BaseUserManager):
     """
-    Custom manager since Novaris authenticates by email, not username.
+    Custom manager since Sagar Sports authenticates by email, not username.
     """
 
     def create_user(self, email, password=None, **extra_fields):

@@ -17,5 +17,5 @@ class HealthCheckView(APIView):
     def get(self, request):
         return success_response(
             data={"status": "ok"},
-            message="Novaris API is running.",
+            message="Sagar Sports API is running.",
         )
