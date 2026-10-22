@@ -160,7 +160,34 @@ class PaymentConfirmView(APIView):
             )
 
         # Online payment verification
-        razorpay_order_id = request.data.get("razorpay_order_id") or payment.transaction_id
+        client_order_id = request.data.get("razorpay_order_id")
+        if client_order_id and client_order_id != payment.transaction_id:
+            logger.warning(
+                "Mismatched razorpay_order_id for order %s: expected %s, got %s",
+                order.id,
+                payment.transaction_id,
+                client_order_id,
+            )
+            return Response(
+                {
+                    "success": False,
+                    "message": "Payment verification failed. Invalid order identifier.",
+                    "errors": {"razorpay_order_id": ["Order identifier mismatch."]},
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        razorpay_order_id = payment.transaction_id
+        if not razorpay_order_id:
+            return Response(
+                {
+                    "success": False,
+                    "message": "Payment has not been initiated for this order.",
+                    "errors": {"payment": ["No initiated transaction found."]},
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
         razorpay_payment_id = request.data.get("razorpay_payment_id")
         razorpay_signature = request.data.get("razorpay_signature")
 
@@ -204,7 +231,18 @@ class PaymentConfirmView(APIView):
             send_order_confirmation_emails(order)
 
         else:
-            # Mock mode in development
+            # Mock mode only permitted in local development
+            if not getattr(settings, "DEBUG", False):
+                logger.error("Mock payment confirmation attempted while DEBUG is False for order %s", order.id)
+                return Response(
+                    {
+                        "success": False,
+                        "message": "Mock payment confirmation is disabled in production.",
+                        "errors": {"payment": ["Unsupported payment provider."]},
+                    },
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
             payment.status = Payment.Status.SUCCESS
             payment.save(update_fields=["status"])
             order.payment_status = Order.PaymentStatus.PAID

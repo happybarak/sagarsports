@@ -118,8 +118,8 @@ def verify_razorpay_payment_signature(razorpay_order_id, razorpay_payment_id, ra
     """
     key_secret = getattr(settings, "RAZORPAY_KEY_SECRET", "")
 
-    # In mock mode
-    if razorpay_order_id.startswith("MOCK-"):
+    # In mock mode (strictly restricted to local development)
+    if getattr(settings, "DEBUG", False) and razorpay_order_id.startswith("MOCK-"):
         return True
 
     if not key_secret or not razorpay_signature or not razorpay_payment_id:

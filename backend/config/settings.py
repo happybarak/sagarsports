@@ -20,7 +20,7 @@ ALLOWED_HOSTS = config(
 )
 CSRF_TRUSTED_ORIGINS = config(
     "CSRF_TRUSTED_ORIGINS",
-    default="https://sagarsports.shop,https://www.sagarsports.shop,https://api.sagarsports.shop,https://*.onrender.com,http://localhost:5173,http://127.0.0.1:5173",
+    default="https://sagarsports.shop,https://www.sagarsports.shop,https://api.sagarsports.shop,http://localhost:5173,http://127.0.0.1:5173",
     cast=Csv(),
 )
 
@@ -209,8 +209,6 @@ CORS_ALLOWED_ORIGINS = config(
 )
 CORS_ALLOWED_ORIGIN_REGEXES = [
     r"^https://.*\.sagarsports\.shop$",
-    r"^https://.*\.onrender\.com$",
-    r"^https://.*\.vercel\.app$",
 ]
 CORS_ALLOW_CREDENTIALS = True
 
@@ -245,6 +243,7 @@ DEFAULT_FROM_EMAIL = config(
 ADMIN_NOTIFICATION_EMAIL = config(
     "ADMIN_NOTIFICATION_EMAIL", default="orders@sagarsports.shop"
 )
+BREVO_API_KEY = config("BREVO_API_KEY", default="")
 
 # Used to build links sent to the user (the React app's URL)
 FRONTEND_URL = config("FRONTEND_URL", default="https://sagarsports.shop")
