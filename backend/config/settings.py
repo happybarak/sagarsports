@@ -1,5 +1,5 @@
 """
-Django settings for Sagar Sports e-commerce backend.
+Django settings for the Novaris e-commerce backend.
 """
 from datetime import timedelta
 from pathlib import Path
@@ -13,16 +13,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # ---------------------------------------------------------------------------
 SECRET_KEY = config("SECRET_KEY")
 DEBUG = config("DEBUG", default=False, cast=bool)
-ALLOWED_HOSTS = config(
-    "ALLOWED_HOSTS",
-    default="localhost,127.0.0.1,sagarsports.shop,www.sagarsports.shop,api.sagarsports.shop,.onrender.com",
-    cast=Csv(),
-)
-CSRF_TRUSTED_ORIGINS = config(
-    "CSRF_TRUSTED_ORIGINS",
-    default="https://sagarsports.shop,https://www.sagarsports.shop,https://api.sagarsports.shop,http://localhost:5173,http://127.0.0.1:5173",
-    cast=Csv(),
-)
+ALLOWED_HOSTS = config("ALLOWED_HOSTS", default="localhost,127.0.0.1", cast=Csv())
 
 # ---------------------------------------------------------------------------
 # Applications
@@ -88,18 +79,12 @@ ASGI_APPLICATION = "config.asgi.application"
 # ---------------------------------------------------------------------------
 # Database
 # ---------------------------------------------------------------------------
+import dj_database_url
+
 DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": config("DB_NAME"),
-        "USER": config("DB_USER"),
-        "PASSWORD": config("DB_PASSWORD"),
-        "HOST": config("DB_HOST", default="localhost"),
-        "PORT": config("DB_PORT", default="5432"),
-        "OPTIONS": {
-        "sslmode": "require",
-        },
-    }
+    "default": dj_database_url.config(
+        default=config("DATABASE_URL")
+    )
 }
 
 # ---------------------------------------------------------------------------
@@ -128,37 +113,28 @@ USE_TZ = True
 STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
-# Cloudflare R2 / S3 configuration
-AWS_ACCESS_KEY_ID = config("AWS_ACCESS_KEY_ID", default="")
-AWS_SECRET_ACCESS_KEY = config("AWS_SECRET_ACCESS_KEY", default="")
-AWS_STORAGE_BUCKET_NAME = config("AWS_STORAGE_BUCKET_NAME", default="")
-AWS_S3_ENDPOINT_URL = config("AWS_S3_ENDPOINT_URL", default="")
+# Cloudflare R2 configuration
+AWS_ACCESS_KEY_ID = config("AWS_ACCESS_KEY_ID")
+AWS_SECRET_ACCESS_KEY = config("AWS_SECRET_ACCESS_KEY")
+AWS_STORAGE_BUCKET_NAME = config("AWS_STORAGE_BUCKET_NAME")
+AWS_S3_ENDPOINT_URL = config("AWS_S3_ENDPOINT_URL")
 AWS_S3_REGION_NAME = config("AWS_S3_REGION_NAME", default="auto")
-AWS_S3_CUSTOM_DOMAIN = config("AWS_S3_CUSTOM_DOMAIN", default="")
+AWS_S3_CUSTOM_DOMAIN = config("AWS_S3_CUSTOM_DOMAIN")
+
+AWS_S3_SIGNATURE_VERSION = "s3v4"
+AWS_S3_FILE_OVERWRITE = False
 AWS_QUERYSTRING_AUTH = False
 
-MEDIA_ROOT = BASE_DIR / "media"
+STORAGES = {
+    "default": {
+        "BACKEND": "storages.backends.s3.S3Storage",
+    },
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+    },
+}
 
-if AWS_S3_CUSTOM_DOMAIN:
-    MEDIA_URL = f"https://{AWS_S3_CUSTOM_DOMAIN}/"
-    STORAGES = {
-        "default": {
-            "BACKEND": "storages.backends.s3.S3Storage",
-        },
-        "staticfiles": {
-            "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
-        },
-    }
-else:
-    MEDIA_URL = "/media/"
-    STORAGES = {
-        "default": {
-            "BACKEND": "django.core.files.storage.FileSystemStorage",
-        },
-        "staticfiles": {
-            "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
-        },
-    }
+MEDIA_URL = f"https://{AWS_S3_CUSTOM_DOMAIN}/"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
@@ -204,69 +180,34 @@ SIMPLE_JWT = {
 # ---------------------------------------------------------------------------
 CORS_ALLOWED_ORIGINS = config(
     "CORS_ALLOWED_ORIGINS",
-    default="http://localhost:5173,http://127.0.0.1:5173,https://sagarsports.shop,https://www.sagarsports.shop",
+    default="http://localhost:5173,http://127.0.0.1:5173",
     cast=Csv(),
 )
-CORS_ALLOWED_ORIGIN_REGEXES = [
-    r"^https://.*\.sagarsports\.shop$",
-]
 CORS_ALLOW_CREDENTIALS = True
 
 # ---------------------------------------------------------------------------
-# Email (order notifications & password reset)
+# Email (password reset)
 # ---------------------------------------------------------------------------
-EMAIL_HOST = config("EMAIL_HOST", default="")
-EMAIL_PORT = config("EMAIL_PORT", default=587, cast=int)
-EMAIL_USE_TLS = config("EMAIL_USE_TLS", default=(EMAIL_PORT == 587), cast=bool)
-EMAIL_USE_SSL = config("EMAIL_USE_SSL", default=(EMAIL_PORT == 465), cast=bool)
-EMAIL_HOST_USER = config("EMAIL_HOST_USER", default="")
-_raw_email_pw = config("EMAIL_HOST_PASSWORD", default="")
-EMAIL_HOST_PASSWORD = _raw_email_pw.replace(" ", "").strip()
-EMAIL_TIMEOUT = config("EMAIL_TIMEOUT", default=10, cast=int)
-
+# Console backend prints "sent" emails to the runserver log instead of
+# actually delivering them — no SMTP credentials needed for local dev or
+# this portfolio deployment. Swap EMAIL_BACKEND for a real provider
+# (SES/SendGrid/SMTP) in production; nothing else about the reset flow
+# needs to change.
 EMAIL_BACKEND = config(
-    "EMAIL_BACKEND",
-    default=(
-        "django.core.mail.backends.smtp.EmailBackend"
-        if EMAIL_HOST
-        else "django.core.mail.backends.console.EmailBackend"
-    ),
+    "EMAIL_BACKEND", default="django.core.mail.backends.console.EmailBackend"
 )
-DEFAULT_FROM_EMAIL = config(
-    "DEFAULT_FROM_EMAIL",
-    default=(
-        f"Sagar Sports <{EMAIL_HOST_USER}>"
-        if EMAIL_HOST_USER
-        else "Sagar Sports <orders@sagarsports.shop>"
-    ),
-)
-ADMIN_NOTIFICATION_EMAIL = config(
-    "ADMIN_NOTIFICATION_EMAIL", default="orders@sagarsports.shop"
-)
-BREVO_API_KEY = config("BREVO_API_KEY", default="")
+DEFAULT_FROM_EMAIL = config("DEFAULT_FROM_EMAIL", default="no-reply@novaris.example.com")
 
-# Used to build links sent to the user (the React app's URL)
-FRONTEND_URL = config("FRONTEND_URL", default="https://sagarsports.shop")
+# Used to build the password-reset link sent to the user (the React app's
+# own URL, not this API's).
+FRONTEND_URL = config("FRONTEND_URL", default="http://localhost:5173")
 
-# ---------------------------------------------------------------------------
-# Production Security & SSL
-# ---------------------------------------------------------------------------
-if not DEBUG:
-    SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
-    SECURE_SSL_REDIRECT = config("SECURE_SSL_REDIRECT", default=False, cast=bool)
-    SESSION_COOKIE_SECURE = True
-    CSRF_COOKIE_SECURE = True
-    SECURE_BROWSER_XSS_FILTER = True
-    SECURE_CONTENT_TYPE_NOSNIFF = True
-    X_FRAME_OPTIONS = "DENY"
-    SECURE_HSTS_SECONDS = config("SECURE_HSTS_SECONDS", default=31536000, cast=int)
-    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
-    SECURE_HSTS_PRELOAD = True
-
-# ---------------------------------------------------------------------------
-# Razorpay Payment Gateway
-# ---------------------------------------------------------------------------
-RAZORPAY_KEY_ID = config("RAZORPAY_KEY_ID", default="")
-RAZORPAY_KEY_SECRET = config("RAZORPAY_KEY_SECRET", default="")
-RAZORPAY_WEBHOOK_SECRET = config("RAZORPAY_WEBHOOK_SECRET", default="")
+EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend
+EMAIL_HOST=smtp.gmail.com
+EMAIL_PORT=587
+EMAIL_USE_TLS=True
+EMAIL_HOST_USER=happybarak7@gmail.com
+EMAIL_HOST_PASSWORD=kmiqqeffwskgjgso
+DEFAULT_FROM_EMAIL=SagarSports <happybarak7@gmail.com>
+ADMIN_NOTIFICATION_EMAIL= happybarak7@gmail.com
 
