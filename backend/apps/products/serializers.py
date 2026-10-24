@@ -182,9 +182,8 @@ class AdminProductSerializer(serializers.ModelSerializer):
         read_only_fields = ["id", "slug", "rating", "review_count", "created_at"]
 
     def get_primary_image(self, obj):
-        image = next((img for img in obj.images.all() if img.is_primary), None)
-        if image is None:
-            image = obj.images.first()
+        images = list(obj.images.all())
+        image = next((img for img in images if img.is_primary), None) or (images[0] if images else None)
         if image is None:
             return None
         request = self.context.get("request")

@@ -1,3 +1,4 @@
+from django.db.models import Prefetch
 from rest_framework import generics, status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -14,6 +15,22 @@ def get_or_create_cart(user):
     return cart
 
 
+def get_optimized_cart(cart_or_id):
+    cart_id = cart_or_id.id if isinstance(cart_or_id, Cart) else cart_or_id
+    return (
+        Cart.objects.filter(id=cart_id)
+        .prefetch_related(
+            Prefetch(
+                "items",
+                queryset=CartItem.objects.select_related("product", "variant").prefetch_related(
+                    "product__images"
+                ),
+            )
+        )
+        .first()
+    )
+
+
 class CartView(APIView):
     """
     GET /api/cart/
@@ -25,7 +42,8 @@ class CartView(APIView):
 
     def get(self, request):
         cart = get_or_create_cart(request.user)
-        return Response(CartSerializer(cart, context={"request": request}).data)
+        optimized_cart = get_optimized_cart(cart)
+        return Response(CartSerializer(optimized_cart, context={"request": request}).data)
 
 
 class CartItemCreateView(generics.CreateAPIView):
@@ -73,7 +91,7 @@ class CartItemCreateView(generics.CreateAPIView):
             )
 
         return success_response(
-            data=CartSerializer(cart, context={"request": request}).data,
+            data=CartSerializer(get_optimized_cart(cart), context={"request": request}).data,
             message="Product added to cart.",
             status_code=status.HTTP_201_CREATED,
         )
@@ -99,7 +117,7 @@ class CartItemDetailView(generics.GenericAPIView):
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return success_response(
-            data=CartSerializer(item.cart, context={"request": request}).data,
+            data=CartSerializer(get_optimized_cart(item.cart_id), context={"request": request}).data,
             message="Cart updated.",
         )
 
@@ -108,7 +126,7 @@ class CartItemDetailView(generics.GenericAPIView):
         cart = item.cart
         item.delete()
         return success_response(
-            data=CartSerializer(cart, context={"request": request}).data,
+            data=CartSerializer(get_optimized_cart(cart.id), context={"request": request}).data,
             message="Item removed from cart.",
         )
 
@@ -168,7 +186,7 @@ class CartSyncView(APIView):
                 )
 
         return success_response(
-            data=CartSerializer(cart, context={"request": request}).data, message="Cart synced."
+            data=CartSerializer(get_optimized_cart(cart), context={"request": request}).data, message="Cart synced."
         )
 
 
@@ -181,5 +199,5 @@ class CartClearView(APIView):
         cart = get_or_create_cart(request.user)
         cart.items.all().delete()
         return success_response(
-            data=CartSerializer(cart, context={"request": request}).data, message="Cart cleared."
+            data=CartSerializer(get_optimized_cart(cart), context={"request": request}).data, message="Cart cleared."
         )

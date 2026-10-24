@@ -1,3 +1,4 @@
+from django.db.models import Prefetch
 from rest_framework import generics, status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -12,6 +13,22 @@ def get_or_create_wishlist(user):
     return wishlist
 
 
+def get_optimized_wishlist(wishlist_or_id):
+    wishlist_id = wishlist_or_id.id if isinstance(wishlist_or_id, Wishlist) else wishlist_or_id
+    return (
+        Wishlist.objects.filter(id=wishlist_id)
+        .prefetch_related(
+            Prefetch(
+                "items",
+                queryset=WishlistItem.objects.select_related("product").prefetch_related(
+                    "product__images"
+                ),
+            )
+        )
+        .first()
+    )
+
+
 class WishlistView(generics.GenericAPIView):
     """GET /api/wishlist/ — the logged-in user's wishlist, creating it if needed."""
 
@@ -20,7 +37,8 @@ class WishlistView(generics.GenericAPIView):
 
     def get(self, request):
         wishlist = get_or_create_wishlist(request.user)
-        return Response(WishlistSerializer(wishlist, context={"request": request}).data)
+        optimized_wishlist = get_optimized_wishlist(wishlist)
+        return Response(WishlistSerializer(optimized_wishlist, context={"request": request}).data)
 
 
 class WishlistItemCreateView(generics.CreateAPIView):
@@ -46,7 +64,7 @@ class WishlistItemCreateView(generics.CreateAPIView):
         )
 
         return success_response(
-            data=WishlistSerializer(wishlist, context={"request": request}).data,
+            data=WishlistSerializer(get_optimized_wishlist(wishlist), context={"request": request}).data,
             message="Added to wishlist." if was_created else "Already in your wishlist.",
             status_code=status.HTTP_201_CREATED if was_created else status.HTTP_200_OK,
         )
@@ -70,6 +88,6 @@ class WishlistItemDeleteView(generics.GenericAPIView):
         wishlist = item.wishlist
         item.delete()
         return success_response(
-            data=WishlistSerializer(wishlist, context={"request": request}).data,
+            data=WishlistSerializer(get_optimized_wishlist(wishlist), context={"request": request}).data,
             message="Removed from wishlist.",
         )

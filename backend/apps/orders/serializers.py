@@ -32,9 +32,8 @@ class OrderItemSerializer(serializers.ModelSerializer):
     def get_product_image(self, obj):
         if not obj.product:
             return None
-        image = next((img for img in obj.product.images.all() if img.is_primary), None)
-        if image is None:
-            image = obj.product.images.first()
+        images = list(obj.product.images.all())
+        image = next((img for img in images if img.is_primary), None) or (images[0] if images else None)
         if image is None:
             return None
         request = self.context.get("request")

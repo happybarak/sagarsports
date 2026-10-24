@@ -175,7 +175,9 @@ class ProductRelatedView(APIView):
     permission_classes = [AllowAny]
 
     def get(self, request, slug):
-        product = get_object_or_404(Product, slug=slug, is_active=True)
+        product = get_object_or_404(
+            Product.objects.select_related("category"), slug=slug, is_active=True
+        )
         related = (
             Product.objects.filter(category=product.category, is_active=True)
             .exclude(pk=product.pk)
@@ -199,7 +201,9 @@ class ProductFrequentlyBoughtTogetherView(APIView):
     permission_classes = [AllowAny]
 
     def get(self, request, slug):
-        product = get_object_or_404(Product, slug=slug, is_active=True)
+        product = get_object_or_404(
+            Product.objects.select_related("category"), slug=slug, is_active=True
+        )
 
         order_ids = OrderItem.objects.filter(
             product=product, order__payment_status="paid"
@@ -216,9 +220,12 @@ class ProductFrequentlyBoughtTogetherView(APIView):
         ranked_ids = [row["product_id"] for row in co_occurring]
 
         if ranked_ids:
-            products_by_id = Product.objects.in_bulk(ranked_ids)
-            # in_bulk doesn't preserve order — rebuild it so the
-            # most-frequently-co-purchased product comes first.
+            products = (
+                Product.objects.filter(id__in=ranked_ids, is_active=True)
+                .prefetch_related("images")
+            )
+            products_by_id = {p.id: p for p in products}
+            # Rebuild order so the most-frequently-co-purchased product comes first.
             results = [products_by_id[pid] for pid in ranked_ids if pid in products_by_id]
             is_fallback = False
         else:

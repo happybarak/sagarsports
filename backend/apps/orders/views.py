@@ -97,7 +97,14 @@ class OrderListCreateView(generics.ListAPIView):
         return [IsAuthenticated()]
 
     def get_queryset(self):
-        return Order.objects.filter(user=self.request.user).prefetch_related("items")
+        return (
+            Order.objects.filter(user=self.request.user)
+            .select_related("shipping_address")
+            .prefetch_related(
+                "items__product__images",
+                "items__variant",
+            )
+        )
 
     def post(self, request):
         if request.user.is_authenticated:
@@ -363,7 +370,13 @@ class OrderDetailView(generics.RetrieveAPIView):
     permission_classes = [AllowAny]
 
     def get_object(self):
-        order = get_object_or_404(Order, pk=self.kwargs["pk"])
+        order = get_object_or_404(
+            Order.objects.select_related("shipping_address").prefetch_related(
+                "items__product__images",
+                "items__variant",
+            ),
+            pk=self.kwargs["pk"],
+        )
         token = self.request.query_params.get("claim_token")
 
         is_owner = self.request.user.is_authenticated and order.user_id == self.request.user.id
@@ -426,8 +439,14 @@ class AdminOrderListView(generics.ListAPIView):
     filterset_fields = ["status", "payment_status"]
 
     def get_queryset(self):
-        return Order.objects.all().select_related("user").prefetch_related("items").order_by(
-            "-created_at"
+        return (
+            Order.objects.all()
+            .select_related("user", "shipping_address")
+            .prefetch_related(
+                "items__product__images",
+                "items__variant",
+            )
+            .order_by("-created_at")
         )
 
 
@@ -440,7 +459,10 @@ class AdminOrderDetailView(generics.RetrieveUpdateAPIView):
     """
 
     permission_classes = [IsAdminUser]
-    queryset = Order.objects.all().prefetch_related("items")
+    queryset = Order.objects.all().select_related("user", "shipping_address").prefetch_related(
+        "items__product__images",
+        "items__variant",
+    )
 
     def get_serializer_class(self):
         if self.request.method in ("PATCH", "PUT"):

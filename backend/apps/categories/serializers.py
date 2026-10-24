@@ -17,7 +17,10 @@ class CategorySerializer(serializers.ModelSerializer):
         fields = ["id", "name", "slug", "image", "children"]
 
     def get_children(self, obj):
-        active_children = obj.children.filter(is_active=True)
+        if hasattr(obj, "prefetched_children"):
+            active_children = obj.prefetched_children
+        else:
+            active_children = obj.children.filter(is_active=True)
         return CategorySerializer(active_children, many=True, context=self.context).data
 
 
