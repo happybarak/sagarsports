@@ -47,9 +47,16 @@ class ProductListSerializer(serializers.ModelSerializer):
         ]
 
     def get_primary_image(self, obj):
+        image_file = getattr(obj, "primary_image_file", None)
+        if image_file:
+            request = self.context.get("request")
+            url = ProductImage.image.field.storage.url(image_file)
+            return request.build_absolute_uri(url) if request else url
+
         image = next((img for img in obj.images.all() if img.is_primary), None)
         if image is None:
-            image = obj.images.all()[0] if obj.images.all() else None
+            images = list(obj.images.all())
+            image = images[0] if images else None
         if image is None:
             return None
         request = self.context.get("request")

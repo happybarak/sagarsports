@@ -1,4 +1,4 @@
-from django.db.models import Count, DecimalField, Q, Value
+from django.db.models import Count, DecimalField, OuterRef, Q, Subquery, Value
 from django.db.models.functions import Coalesce, NullIf
 from django.shortcuts import get_object_or_404
 from rest_framework import generics, viewsets
@@ -13,7 +13,7 @@ from apps.categories.models import Category
 from apps.orders.models import OrderItem
 from apps.products.description_generator import generate_product_description
 from apps.products.filters import ProductFilter
-from apps.products.models import Product
+from apps.products.models import Product, ProductImage
 from apps.products.search_utils import expand_search_terms
 from apps.products.serializers import (
     AdminProductSerializer,
@@ -57,16 +57,22 @@ class ProductListView(generics.ListAPIView):
     ordering = ["-created_at"]
 
     def get_queryset(self):
+        primary_image_subquery = Subquery(
+            ProductImage.objects.filter(product=OuterRef("pk"))
+            .order_by("-is_primary", "order", "id")
+            .values("image")[:1]
+        )
         queryset = (
             Product.objects.filter(is_active=True)
-            .prefetch_related("images")
             .annotate(
+                primary_image_file=primary_image_subquery,
                 selling_price=Coalesce(
                     NullIf("discount_price", Value(0), output_field=DecimalField()),
                     "price",
                     output_field=DecimalField(),
-                )
+                ),
             )
+            .defer("description")
         )
 
         search_term = self.request.query_params.get("search")
