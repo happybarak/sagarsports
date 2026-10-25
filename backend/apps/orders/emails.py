@@ -369,6 +369,16 @@ def _send_email_message(subject, text_body, html_body, from_email, recipients, r
             elif "@" in from_email:
                 sender_email = from_email.strip()
 
+            if not sender_email or "@" not in sender_email:
+                default_from = getattr(settings, "DEFAULT_FROM_EMAIL", "")
+                sub_match = re.match(r"^(.*?)\s*<(.+?)>$", default_from.strip())
+                if sub_match:
+                    sender_email = sub_match.group(2).strip()
+                elif "@" in default_from:
+                    sender_email = default_from.strip()
+                else:
+                    sender_email = "support@sagarsports.shop"
+
             to_list = [{"email": r.strip()} for r in recipients if r and "@" in r]
             if not to_list:
                 logger.warning("No valid recipients for email: %s", recipients)

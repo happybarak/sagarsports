@@ -188,29 +188,31 @@ CORS_ALLOWED_ORIGINS = config(
 CORS_ALLOW_CREDENTIALS = True
 
 # ---------------------------------------------------------------------------
-# Email (password reset)
+# Email Configuration
 # ---------------------------------------------------------------------------
-# Console backend prints "sent" emails to the runserver log instead of
-# actually delivering them — no SMTP credentials needed for local dev or
-# this portfolio deployment. Swap EMAIL_BACKEND for a real provider
-# (SES/SendGrid/SMTP) in production; nothing else about the reset flow
-# needs to change.
 EMAIL_BACKEND = config(
-    "EMAIL_BACKEND", default="django.core.mail.backends.console.EmailBackend"
+    "EMAIL_BACKEND", default="django.core.mail.backends.smtp.EmailBackend"
 )
-DEFAULT_FROM_EMAIL = config("DEFAULT_FROM_EMAIL", default="no-reply@novaris.example.com")
-
-# Used to build the password-reset link sent to the user (the React app's
-# own URL, not this API's).
-FRONTEND_URL = config("FRONTEND_URL", default="http://localhost:5173")
-
-EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
-EMAIL_HOST = "smtp.gmail.com"
-EMAIL_PORT = 587
-EMAIL_USE_TLS = True
+EMAIL_HOST = config("EMAIL_HOST", default="smtp.gmail.com")
+EMAIL_PORT = config("EMAIL_PORT", default=587, cast=int)
+EMAIL_USE_TLS = config("EMAIL_USE_TLS", default=True, cast=bool)
+EMAIL_TIMEOUT = config("EMAIL_TIMEOUT", default=10, cast=int)
 
 EMAIL_HOST_USER = config("EMAIL_HOST_USER", default="")
 EMAIL_HOST_PASSWORD = config("EMAIL_HOST_PASSWORD", default="")
 
-DEFAULT_FROM_EMAIL = "SagarSports <happybarak@gmail.com>"
-ADMIN_NOTIFICATION_EMAIL = "happybarak7@gmail.com"
+DEFAULT_FROM_EMAIL = config("DEFAULT_FROM_EMAIL", default="SagarSports <happybarak@gmail.com>")
+ADMIN_NOTIFICATION_EMAIL = config("ADMIN_NOTIFICATION_EMAIL", default="happybarak7@gmail.com")
+
+# Brevo HTTP API Configuration (Bypasses Render Free Tier outbound SMTP port 587 block)
+BREVO_API_KEY = config("BREVO_API_KEY", default="")
+
+# Used to build links in emails (e.g. password reset and order tracking)
+FRONTEND_URL = config("FRONTEND_URL", default="https://sagarsports.shop")
+
+# ---------------------------------------------------------------------------
+# Razorpay Configuration
+# ---------------------------------------------------------------------------
+RAZORPAY_KEY_ID = config("RAZORPAY_KEY_ID", default="")
+RAZORPAY_KEY_SECRET = config("RAZORPAY_KEY_SECRET", default="")
+RAZORPAY_WEBHOOK_SECRET = config("RAZORPAY_WEBHOOK_SECRET", default="")

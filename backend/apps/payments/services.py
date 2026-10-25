@@ -31,8 +31,12 @@ def create_razorpay_order(order):
     key_id = getattr(settings, "RAZORPAY_KEY_ID", "")
     key_secret = getattr(settings, "RAZORPAY_KEY_SECRET", "")
 
-    # If Razorpay credentials are not provided, fall back to mock
+    # If Razorpay credentials are not provided, fall back to mock (in local dev only)
     if not key_id or not key_secret or key_id.startswith("rzp_test_change"):
+        if not getattr(settings, "DEBUG", False):
+            raise RuntimeError(
+                "Razorpay credentials (RAZORPAY_KEY_ID / RAZORPAY_KEY_SECRET) are not configured on the server."
+            )
         _, mock_id = process_mock_payment(order.total)
         return {
             "order_id": mock_id,

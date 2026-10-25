@@ -84,7 +84,29 @@ class PaymentInitiateView(APIView):
                 message="Cash on Delivery order initiated.",
             )
 
-        # Online payment via Razorpay (with mock fallback if keys not configured)
+        # Online payment via Razorpay (with mock fallback in local dev only)
+        key_id = getattr(settings, "RAZORPAY_KEY_ID", "")
+        key_secret = getattr(settings, "RAZORPAY_KEY_SECRET", "")
+        is_missing_keys = not key_id or not key_secret or key_id.startswith("rzp_test_change")
+
+        if not getattr(settings, "DEBUG", False) and is_missing_keys:
+            logger.error(
+                "Payment initiation aborted for order %s: Razorpay credentials are not configured in production.",
+                order.id,
+            )
+            return Response(
+                {
+                    "success": False,
+                    "message": "Online payment is currently unavailable due to gateway configuration. Please choose Cash on Delivery or contact store support.",
+                    "errors": {
+                        "payment": [
+                            "Razorpay credentials (RAZORPAY_KEY_ID / RAZORPAY_KEY_SECRET) are not configured."
+                        ]
+                    },
+                },
+                status=status.HTTP_503_SERVICE_UNAVAILABLE,
+            )
+
         try:
             rzp_data = create_razorpay_order(order)
             payment.transaction_id = rzp_data.get("order_id", "")
