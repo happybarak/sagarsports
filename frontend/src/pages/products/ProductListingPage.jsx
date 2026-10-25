@@ -160,7 +160,7 @@ function ProductListingPage() {
   ];
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-4 md:px-6">
+    <div className="mx-auto max-w-screen-2xl px-4 sm:px-6 lg:px-8 xl:px-12 py-4">
       <Breadcrumb items={breadcrumbItems} />
 
       {/* Sleek Minimal Header: Only Category on Left, Compact SORT | FILTER on Right */}
@@ -347,8 +347,8 @@ function ProductListingPage() {
       {/* Full-width Product Grid */}
       <div>
         {listing.status === "loading" && (
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
-            {Array.from({ length: 8 }).map((_, index) => (
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5">
+            {Array.from({ length: 10 }).map((_, index) => (
               <div key={index} className="aspect-[3/4] animate-pulse rounded-lg bg-gray-100" />
             ))}
           </div>
@@ -394,7 +394,7 @@ function ProductListingPage() {
 
         {listing.status === "succeeded" && listing.items.length > 0 && (
           <>
-            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5">
               {listing.items.map((product) => (
                 <ProductCard key={product.id} product={product} />
               ))}

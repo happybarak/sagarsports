@@ -2,8 +2,19 @@ import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 
 import addressService from "../../services/addressService";
 
-const extractErrorMessage = (error) =>
-  error.response?.data?.message || error.message || "Something went wrong.";
+const extractErrorMessage = (error) => {
+  if (error.response?.data?.errors) {
+    const errs = error.response.data.errors;
+    if (typeof errs === "object" && !Array.isArray(errs)) {
+      const messages = Object.values(errs).map((v) => (Array.isArray(v) ? v[0] : String(v)));
+      if (messages.length > 0) return messages.join(" ");
+    }
+    if (Array.isArray(errs) && errs.length > 0) {
+      return String(errs[0]);
+    }
+  }
+  return error.response?.data?.message || error.message || "Something went wrong.";
+};
 
 export const fetchAddresses = createAsyncThunk(
   "addresses/fetchAddresses",

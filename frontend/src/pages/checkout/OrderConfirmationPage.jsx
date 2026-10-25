@@ -61,7 +61,7 @@ function OrderConfirmationPage() {
   const canCancel = isAuthenticated && CANCELLABLE_STATUSES.includes(order.status);
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-8 md:px-6">
+    <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 py-8">
       <Breadcrumb
         items={[
           { label: "Home", to: "/" },
@@ -160,10 +160,12 @@ function OrderConfirmationPage() {
               : `₹${Number(order.shipping_cost).toLocaleString("en-IN")}`}
           </span>
         </div>
-        <div className="flex justify-between text-gray-600">
-          <span>Tax</span>
-          <span>₹{Number(order.tax).toLocaleString("en-IN")}</span>
-        </div>
+        {Number(order.tax) > 0 && (
+          <div className="flex justify-between text-gray-600">
+            <span>Tax</span>
+            <span>₹{Number(order.tax).toLocaleString("en-IN")}</span>
+          </div>
+        )}
         {Number(order.cod_fee) > 0 && (
           <div className="flex justify-between text-gray-600">
             <span>Cash on Delivery charge</span>

@@ -20,7 +20,7 @@ function TermsPage() {
         <section className="rounded-xl border border-gray-200 bg-white p-7 shadow-sm">
           <h2 className="text-xl font-semibold text-brand">Orders &amp; Pricing</h2>
           <p className="mt-3 leading-7 text-gray-600">
-            Product availability and pricing may change. The applicable price and availability are shown at checkout and confirmed when the order is placed. Cash on Delivery orders carry an additional ₹100 COD charge.
+            Product availability and pricing may change. The applicable price and availability are shown at checkout and confirmed when the order is placed. Cash on Delivery orders carry an additional ₹50 COD charge.
           </p>
         </section>
         <section className="rounded-xl border border-gray-200 bg-white p-7 shadow-sm">

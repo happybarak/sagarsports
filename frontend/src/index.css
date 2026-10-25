@@ -5,6 +5,34 @@
    browser's own look. Restore that so existing forms look exactly as before.
    Utility classes (bg-white, etc.) still win because they sit in a later layer. */
 @layer base {
+  *, ::before, ::after {
+    cursor: default;
+  }
+  a,
+  button,
+  select,
+  summary,
+  [role="button"],
+  label,
+  input[type="button"],
+  input[type="submit"],
+  input[type="reset"],
+  input[type="checkbox"],
+  input[type="radio"] {
+    cursor: pointer;
+  }
+  input:where(:not([type="button"], [type="submit"], [type="reset"], [type="checkbox"], [type="radio"])),
+  textarea,
+  [contenteditable="true"] {
+    cursor: text;
+  }
+  input:disabled,
+  button:disabled,
+  select:disabled,
+  textarea:disabled,
+  [aria-disabled="true"] {
+    cursor: not-allowed;
+  }
   input:where(:not([type="checkbox"], [type="radio"], [type="range"], [type="color"])),
   select,
   textarea {
@@ -16,6 +44,7 @@
     border-radius: revert;
     padding: revert;
     margin-inline-end: revert;
+    cursor: pointer;
   }
 }
 

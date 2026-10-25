@@ -10,7 +10,7 @@ function MegaMenu({ categories }) {
 
   return (
     <nav className="relative hidden border-t border-gray-100 bg-white md:block">
-      <ul className="mx-auto flex max-w-7xl items-center gap-1 px-6">
+      <ul className="mx-auto flex max-w-screen-2xl items-center gap-1 px-4 sm:px-6 lg:px-8 xl:px-12">
         {categories.map((category) => (
           <li
             key={category.id}

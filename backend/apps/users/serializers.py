@@ -1,3 +1,5 @@
+import re
+
 from django.contrib.auth.password_validation import validate_password
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
@@ -81,6 +83,46 @@ class AddressSerializer(serializers.ModelSerializer):
             "country",
             "is_default",
         ]
+
+    def validate_phone(self, value):
+        cleaned = re.sub(r"[\s\-+]", "", str(value).strip())
+        if cleaned.startswith("91") and len(cleaned) == 12:
+            cleaned = cleaned[2:]
+        elif cleaned.startswith("0") and len(cleaned) == 11:
+            cleaned = cleaned[1:]
+        if not re.match(r"^[6-9]\d{9}$", cleaned):
+            raise serializers.ValidationError("Enter a valid 10-digit mobile number.")
+        return cleaned
+
+    def validate_postal_code(self, value):
+        cleaned = str(value).strip()
+        if not re.match(r"^\d{6}$", cleaned):
+            raise serializers.ValidationError("Enter a valid 6-digit PIN code.")
+        return cleaned
+
+    def validate_full_name(self, value):
+        cleaned = str(value).strip()
+        if not cleaned:
+            raise serializers.ValidationError("Full name is required.")
+        return cleaned
+
+    def validate_address_line_1(self, value):
+        cleaned = str(value).strip()
+        if not cleaned:
+            raise serializers.ValidationError("Address line 1 is required.")
+        return cleaned
+
+    def validate_city(self, value):
+        cleaned = str(value).strip()
+        if not cleaned:
+            raise serializers.ValidationError("City is required.")
+        return cleaned
+
+    def validate_state(self, value):
+        cleaned = str(value).strip()
+        if not cleaned:
+            raise serializers.ValidationError("State is required.")
+        return cleaned
 
 
 class AdminUserSerializer(serializers.ModelSerializer):

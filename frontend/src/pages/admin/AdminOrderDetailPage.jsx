@@ -114,10 +114,12 @@ function AdminOrderDetailPage() {
           <span>Shipping</span>
           <span>₹{Number(order.shipping_cost).toLocaleString("en-IN")}</span>
         </div>
-        <div className="flex justify-between text-gray-600">
-          <span>Tax</span>
-          <span>₹{Number(order.tax).toLocaleString("en-IN")}</span>
-        </div>
+        {Number(order.tax) > 0 && (
+          <div className="flex justify-between text-gray-600">
+            <span>Tax</span>
+            <span>₹{Number(order.tax).toLocaleString("en-IN")}</span>
+          </div>
+        )}
         {Number(order.cod_fee) > 0 && (
           <div className="flex justify-between text-gray-600">
             <span>Cash on Delivery charge</span>

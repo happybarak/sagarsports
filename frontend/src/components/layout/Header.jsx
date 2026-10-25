@@ -1,12 +1,12 @@
 import { useEffect, useRef, useState } from "react";
-import { FiHeart, FiMenu, FiSearch, FiShoppingCart, FiUser } from "react-icons/fi";
+import { FiMenu, FiSearch, FiShoppingCart, FiUser } from "react-icons/fi";
 import { useDispatch, useSelector } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
 
 import useDebounce from "../../hooks/useDebounce";
 import { logoutUser } from "../../redux/slices/authSlice";
 import { fetchCart } from "../../redux/slices/cartSlice";
-import { clearWishlist, fetchWishlist } from "../../redux/slices/wishlistSlice";
+import { clearWishlist } from "../../redux/slices/wishlistSlice";
 import productService from "../../services/productService";
 import MegaMenu from "./MegaMenu";
 import MobileNav from "./MobileNav";
@@ -17,7 +17,6 @@ function Header() {
   const { items: categories } = useSelector((state) => state.categories);
   const { user, isAuthenticated } = useSelector((state) => state.auth);
   const { items: cartItems } = useSelector((state) => state.cart);
-  const { items: wishlistItems } = useSelector((state) => state.wishlist);
   const cartItemCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
 
   const [searchQuery, setSearchQuery] = useState("");
@@ -84,7 +83,7 @@ function Header() {
 
   return (
     <header className="sticky top-0 z-30 bg-white shadow-sm">
-      <div className="mx-auto flex max-w-7xl items-center gap-4 px-4 py-3 md:px-6">
+      <div className="mx-auto flex max-w-screen-2xl items-center gap-4 px-4 sm:px-6 lg:px-8 xl:px-12 py-3">
         <button
           onClick={() => setIsMobileNavOpen(true)}
           aria-label="Open menu"
@@ -106,7 +105,7 @@ function Header() {
           className="relative hidden flex-1 md:flex"
           ref={searchContainerRef}
         >
-          <div className="relative w-full max-w-xl">
+          <div className="relative w-full max-w-2xl">
             <input
               type="text"
               value={searchQuery}
@@ -220,15 +219,6 @@ function Header() {
             )}
           </div>
 
-          {/* Wishlist item count, from wishlistSlice. */}
-          <Link to="/wishlist" aria-label="Wishlist" className="relative text-gray-600 hover:text-brand-accent">
-            <FiHeart size={20} />
-            {wishlistItems.length > 0 && (
-              <span className="absolute -right-2 -top-2 flex h-4 w-4 items-center justify-center rounded-full bg-brand-accent text-[10px] font-bold text-white">
-                {wishlistItems.length > 9 ? "9+" : wishlistItems.length}
-              </span>
-            )}
-          </Link>
           <Link to="/cart" aria-label="Cart" className="relative text-gray-600 hover:text-brand-accent">
             <FiShoppingCart size={20} />
             {cartItemCount > 0 && (

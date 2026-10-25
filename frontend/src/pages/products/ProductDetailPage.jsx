@@ -72,7 +72,7 @@ function ProductDetailPage() {
 
   if (status === "loading" || status === "idle") {
     return (
-      <div className="mx-auto max-w-7xl px-4 py-10 md:px-6">
+      <div className="mx-auto max-w-screen-2xl px-4 sm:px-6 lg:px-8 xl:px-12 py-10">
         <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
           <div className="aspect-square animate-pulse rounded-lg bg-gray-100" />
           <div className="flex flex-col gap-3">
@@ -87,7 +87,7 @@ function ProductDetailPage() {
 
   if (status === "failed" || !product) {
     return (
-      <div className="mx-auto max-w-7xl px-4 py-16 text-center">
+      <div className="mx-auto max-w-screen-2xl px-4 sm:px-6 lg:px-8 xl:px-12 py-16 text-center">
         <p className="text-gray-500">Couldn't find this product.</p>
       </div>
     );
@@ -197,7 +197,7 @@ function ProductDetailPage() {
   };
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8 md:px-6">
+    <div className="mx-auto max-w-screen-2xl px-4 sm:px-6 lg:px-8 xl:px-12 py-8">
       <Breadcrumb
         items={[
           { label: "Home", to: "/" },
@@ -206,10 +206,23 @@ function ProductDetailPage() {
         ]}
       />
 
-      <div className="grid grid-cols-1 gap-10 md:grid-cols-2">
-        <ImageGallery images={product.images} productName={product.name} />
+      <div className="grid grid-cols-1 gap-10 lg:grid-cols-12 xl:gap-14">
+        <div className="relative lg:col-span-7">
+          <ImageGallery images={product.images} productName={product.name} />
+          <button
+            onClick={handleToggleWishlist}
+            disabled={isTogglingWishlist}
+            aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
+            className="absolute right-4 top-4 z-10 flex h-11 w-11 items-center justify-center rounded-full bg-white/95 shadow-md backdrop-blur-sm transition-all duration-200 hover:scale-110 hover:bg-white hover:shadow-lg disabled:opacity-60"
+          >
+            <FiHeart
+              size={22}
+              className={isWishlisted ? "fill-red-500 text-red-500" : "text-gray-600 hover:text-red-500"}
+            />
+          </button>
+        </div>
 
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-4 lg:col-span-5">
           <span className="text-sm text-gray-400">{product.brand}</span>
           <h1 className="text-2xl font-bold text-brand md:text-3xl">{product.name}</h1>
 
@@ -253,7 +266,7 @@ function ProductDetailPage() {
           <div className="grid grid-cols-1 gap-2 rounded-lg bg-brand-surface p-3 text-xs text-gray-600 sm:grid-cols-3">
             <span>🚚 Delivery across India</span>
             <span>🔄 7-day return &amp; exchange</span>
-            <span>💵 Cash on Delivery (+₹100)</span>
+            <span>💵 Cash on Delivery (+₹50)</span>
           </div>
 
           <VariantSelector
@@ -289,11 +302,11 @@ function ProductDetailPage() {
             </p>
           )}
 
-          <div className="flex flex-col gap-2 sm:flex-row">
+          <div className="flex flex-col gap-3 sm:flex-row">
             <button
               onClick={handleAddToCart}
               disabled={!canAddToCart || isSubmitting}
-              className="flex flex-1 items-center justify-center gap-2 rounded-md bg-brand py-3 text-sm font-semibold text-white transition hover:bg-brand-light disabled:cursor-not-allowed disabled:opacity-40"
+              className="flex flex-1 items-center justify-center gap-2 rounded-md bg-brand py-3.5 text-sm font-semibold text-white transition hover:bg-brand-light disabled:cursor-not-allowed disabled:opacity-40"
             >
               <FiShoppingBag size={18} />
               {isSubmitting ? "Adding..." : "Add to Cart"}
@@ -301,18 +314,10 @@ function ProductDetailPage() {
             <button
               onClick={handleBuyNow}
               disabled={!canAddToCart || isSubmitting}
-              className="flex flex-1 items-center justify-center gap-2 rounded-md border border-brand py-3 text-sm font-semibold text-brand transition hover:bg-brand hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
+              className="flex flex-1 items-center justify-center gap-2 rounded-md border border-brand py-3.5 text-sm font-semibold text-brand transition hover:bg-brand hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
             >
               <FiZap size={18} />
               Buy Now
-            </button>
-            <button
-              onClick={handleToggleWishlist}
-              disabled={isTogglingWishlist}
-              aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
-              className="flex items-center justify-center rounded-md border border-gray-200 px-4 text-gray-500 hover:text-brand-accent disabled:opacity-60"
-            >
-              <FiHeart size={18} className={isWishlisted ? "fill-red-500 text-red-500" : ""} />
             </button>
           </div>
 

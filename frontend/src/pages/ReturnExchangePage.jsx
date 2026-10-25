@@ -48,7 +48,7 @@ function ReturnExchangePage() {
         <section className="rounded-xl border border-gray-200 bg-white p-7 shadow-sm">
           <h2 className="text-xl font-semibold text-brand">Cash on Delivery</h2>
           <p className="mt-3 leading-7 text-gray-600">
-            Cash on Delivery (COD) orders carry an additional <strong>₹100 COD charge</strong>.
+            Cash on Delivery (COD) orders carry an additional <strong>₹50 COD charge</strong>.
             This charge is separate from the product price and applicable shipping charges.
           </p>
         </section>

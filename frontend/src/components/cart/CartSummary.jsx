@@ -10,7 +10,7 @@ function CartSummary({ subtotal, itemCount, onClearCart }) {
         <span>₹{Number(subtotal).toLocaleString("en-IN")}</span>
       </div>
       <div className="mt-1 flex justify-between text-sm text-gray-400">
-        <span>Shipping &amp; tax</span>
+        <span>Shipping</span>
         <span>Calculated at checkout</span>
       </div>
 

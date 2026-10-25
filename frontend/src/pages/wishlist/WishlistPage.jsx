@@ -15,13 +15,13 @@ function WishlistPage() {
   }, [dispatch]);
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8 md:px-6">
+    <div className="mx-auto max-w-screen-2xl px-4 sm:px-6 lg:px-8 xl:px-12 py-8">
       <Breadcrumb items={[{ label: "Home", to: "/" }, { label: "Wishlist" }]} />
       <h1 className="mb-6 text-2xl font-bold text-brand">My Wishlist</h1>
 
       {status === "loading" && items.length === 0 && (
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
-          {Array.from({ length: 4 }).map((_, index) => (
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5">
+          {Array.from({ length: 5 }).map((_, index) => (
             <div key={index} className="aspect-square animate-pulse rounded-lg bg-gray-100" />
           ))}
         </div>
@@ -40,7 +40,7 @@ function WishlistPage() {
       )}
 
       {items.length > 0 && (
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5">
           {items.map((item) => (
             <ProductCard key={item.id} product={item.product} />
           ))}

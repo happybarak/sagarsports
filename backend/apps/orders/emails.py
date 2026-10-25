@@ -84,6 +84,7 @@ def _send_customer_confirmation(order):
     items_block = "\n".join(items_text)
 
     shipping_str = "FREE" if order.shipping_cost == 0 else f"Rs. {order.shipping_cost}"
+    tax_str = f"\nTaxes: Rs. {order.tax}" if order.tax > 0 else ""
     cod_str = f"\nCOD Fee: Rs. {order.cod_fee}" if order.cod_fee > 0 else ""
 
     text_body = f"""Hi {customer_name},
@@ -95,8 +96,7 @@ ORDER SUMMARY:
 {items_block}
 
 Subtotal: Rs. {order.subtotal}
-Shipping: {shipping_str}
-Taxes (GST 18%): Rs. {order.tax}{cod_str}
+Shipping: {shipping_str}{tax_str}{cod_str}
 Grand Total: Rs. {order.total}
 
 Payment Method: {payment_method_label} ({payment_status_label})
@@ -214,10 +214,7 @@ https://sagarsports.shop
               <span>Shipping:</span>
               <span style='font-weight:600;'>{shipping_str}</span>
             </div>
-            <div style='display:flex;justify-content:space-between;padding:4px 0;font-size:14px;color:#4b5563;'>
-              <span>Taxes (GST 18%):</span>
-              <span style='font-weight:600;'>&#8377;{order.tax:,.2f}</span>
-            </div>
+            {f"<div style='display:flex;justify-content:space-between;padding:4px 0;font-size:14px;color:#4b5563;'><span>Taxes:</span><span style='font-weight:600;'>&#8377;{order.tax:,.2f}</span></div>" if order.tax > 0 else ""}
             {f"<div style='display:flex;justify-content:space-between;padding:4px 0;font-size:14px;color:#4b5563;'><span>COD Charge:</span><span style='font-weight:600;'>&#8377;{order.cod_fee:,.2f}</span></div>" if order.cod_fee > 0 else ""}
             <div style='display:flex;justify-content:space-between;padding:8px 0;font-size:16px;color:#111827;font-weight:bold;border-top:1px solid #e5e7eb;margin-top:6px;'>
               <span>Grand Total:</span>

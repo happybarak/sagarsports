@@ -2,7 +2,7 @@ import ProductCard from "./ProductCard";
 
 function ProductGrid({ title, subtitle, items, status }) {
   return (
-    <section className="mx-auto max-w-7xl px-4 py-10 md:px-6">
+    <section className="mx-auto max-w-screen-2xl px-4 sm:px-6 lg:px-8 xl:px-12 py-10">
       <div className="mb-5 flex items-baseline justify-between">
         <div>
           <h2 className="text-xl font-bold text-brand md:text-2xl">{title}</h2>
@@ -11,8 +11,8 @@ function ProductGrid({ title, subtitle, items, status }) {
       </div>
 
       {status === "loading" && (
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
-          {Array.from({ length: 4 }).map((_, index) => (
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5">
+          {Array.from({ length: 5 }).map((_, index) => (
             <div
               key={index}
               className="aspect-square animate-pulse rounded-lg bg-gray-100"
@@ -30,7 +30,7 @@ function ProductGrid({ title, subtitle, items, status }) {
       )}
 
       {status === "succeeded" && items.length > 0 && (
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5">
           {items.map((product) => (
             <ProductCard key={product.id} product={product} />
           ))}

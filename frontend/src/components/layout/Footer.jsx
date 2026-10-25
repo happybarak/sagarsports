@@ -21,7 +21,7 @@ function Footer({ categories }) {
 
   return (
     <footer className="mt-16 bg-brand text-white">
-      <div className="mx-auto grid max-w-7xl grid-cols-1 gap-10 px-6 py-12 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mx-auto grid max-w-screen-2xl grid-cols-1 gap-10 px-4 sm:px-6 lg:px-8 xl:px-12 py-12 sm:grid-cols-2 lg:grid-cols-4">
         <div>
           <h3 className="mb-3 text-lg font-bold">SagarSports</h3>
           <p className="text-sm leading-6 text-white/70">

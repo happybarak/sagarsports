@@ -15,14 +15,14 @@ import cartStorage from "../../services/cartStorage";
 // the order is actually created.
 const FREE_SHIPPING_THRESHOLD = 5000;
 const FLAT_SHIPPING_COST = 99;
-const TAX_RATE = 0.18;
-const COD_FEE = 100; // must match backend COD_FEE (apps/orders/views.py)
+const TAX_RATE = 0; // No tax/GST
+const COD_FEE = 50; // must match backend COD_FEE (apps/orders/views.py)
 
 function calculateTotals(subtotal, paymentMethod = "online") {
   const shippingCost = subtotal >= FREE_SHIPPING_THRESHOLD ? 0 : FLAT_SHIPPING_COST;
-  const tax = Math.round(subtotal * TAX_RATE * 100) / 100;
+  const tax = 0;
   const codFee = paymentMethod === "cod" ? COD_FEE : 0;
-  const total = subtotal + shippingCost + tax + codFee;
+  const total = subtotal + shippingCost + codFee;
   return { shippingCost, tax, codFee, total };
 }
 
@@ -78,6 +78,7 @@ function CheckoutPage() {
   const [isAddingAddress, setIsAddingAddress] = useState(false);
   const [isSavingAddress, setIsSavingAddress] = useState(false);
   const [guestForm, setGuestForm] = useState(emptyGuestForm);
+  const [addressSaveError, setAddressSaveError] = useState("");
   const [isPlacingOrder, setIsPlacingOrder] = useState(false);
   const [placeOrderError, setPlaceOrderError] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("online");
@@ -106,18 +107,41 @@ function CheckoutPage() {
 
   const handleGuestFormChange = (event) => {
     const { name, value } = event.target;
-    setGuestForm((prev) => ({ ...prev, [name]: value }));
+    let finalValue = value;
+    if (name === "phone") {
+      finalValue = finalValue.replace(/[^\d+]/g, "").slice(0, 13);
+    } else if (name === "postal_code") {
+      finalValue = finalValue.replace(/\D/g, "").slice(0, 6);
+    }
+    setGuestForm((prev) => ({ ...prev, [name]: finalValue }));
   };
 
-  const isGuestFormValid = GUEST_REQUIRED_FIELDS.every((field) => guestForm[field].trim());
+  const isGuestPhoneValid = (phone) => {
+    const clean = phone.trim().replace(/^(\+91|0)/, "").replace(/[\s\-]/g, "");
+    return /^[6-9]\d{9}$/.test(clean);
+  };
+  const isGuestPinValid = (pin) => /^\d{6}$/.test(pin.trim());
+  const isGuestEmailValid = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
+
+  const isGuestFormValid =
+    GUEST_REQUIRED_FIELDS.every((field) => Boolean(guestForm[field]?.trim())) &&
+    isGuestPhoneValid(guestForm.phone) &&
+    isGuestPinValid(guestForm.postal_code) &&
+    isGuestEmailValid(guestForm.email);
 
   const handleSaveAddress = async (formData) => {
     setIsSavingAddress(true);
+    setAddressSaveError("");
     const result = await dispatch(createAddress(formData));
     setIsSavingAddress(false);
     if (createAddress.fulfilled.match(result)) {
       setSelectedAddressId(result.payload.id);
       setIsAddingAddress(false);
+      return { success: true };
+    } else {
+      const err = result.payload || "Failed to save address.";
+      setAddressSaveError(err);
+      return { success: false, error: err };
     }
   };
 
@@ -128,19 +152,19 @@ function CheckoutPage() {
     const orderPayload = isAuthenticated
       ? { addressId: selectedAddressId, paymentMethod }
       : {
-          guestEmail: guestForm.email,
+          guestEmail: guestForm.email.trim(),
           items: cartItems.map((item) => ({
             product_id: item.product.id,
             variant_id: item.variant?.id,
             quantity: item.quantity,
           })),
-          shippingFullName: guestForm.full_name,
-          shippingPhone: guestForm.phone,
-          shippingAddressLine1: guestForm.address_line_1,
-          shippingAddressLine2: guestForm.address_line_2,
-          shippingCity: guestForm.city,
-          shippingState: guestForm.state,
-          shippingPostalCode: guestForm.postal_code,
+          shippingFullName: guestForm.full_name.trim(),
+          shippingPhone: guestForm.phone.trim().replace(/^(\+91|0)/, "").replace(/[\s\-]/g, ""),
+          shippingAddressLine1: guestForm.address_line_1.trim(),
+          shippingAddressLine2: guestForm.address_line_2.trim(),
+          shippingCity: guestForm.city.trim(),
+          shippingState: guestForm.state.trim(),
+          shippingPostalCode: guestForm.postal_code.trim(),
           shippingCountry: guestForm.country,
           paymentMethod,
         };
@@ -266,7 +290,7 @@ function CheckoutPage() {
     "rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-brand-accent focus:outline-none focus:ring-1 focus:ring-brand-accent";
 
   return (
-    <div className="mx-auto max-w-4xl px-4 py-8 md:px-6">
+    <div className="mx-auto max-w-5xl xl:max-w-6xl px-4 sm:px-6 lg:px-8 py-8">
       <Breadcrumb items={[{ label: "Home", to: "/" }, { label: "Cart", to: "/cart" }, { label: "Checkout" }]} />
       <h1 className="mb-6 text-2xl font-bold text-brand">Checkout</h1>
 
@@ -316,87 +340,129 @@ function CheckoutPage() {
               {isAddingAddress ? (
                 <AddressForm
                   onSave={handleSaveAddress}
-                  onCancel={() => setIsAddingAddress(false)}
+                  onCancel={() => {
+                    setIsAddingAddress(false);
+                    setAddressSaveError("");
+                  }}
                   isSaving={isSavingAddress}
+                  serverError={addressSaveError}
                 />
               ) : (
                 <button
-                  onClick={() => setIsAddingAddress(true)}
-                  className="rounded-md border border-dashed border-gray-300 py-3 text-sm font-medium text-gray-500 hover:border-brand-accent hover:text-brand-accent"
+                  onClick={() => {
+                    setIsAddingAddress(true);
+                    setAddressSaveError("");
+                  }}
+                  className="rounded-md border border-dashed border-gray-300 py-3 text-sm font-medium text-gray-500 hover:border-brand-accent hover:text-brand-accent transition"
                 >
                   + Add a new address
                 </button>
               )}
             </>
           ) : (
-            <div className="flex flex-col gap-3 rounded-lg border border-gray-200 p-4">
-              <input
-                name="email"
-                type="email"
-                placeholder="Email (for order updates)"
-                required
-                value={guestForm.email}
-                onChange={handleGuestFormChange}
-                className={guestInputClass}
-              />
-              <div className="grid grid-cols-2 gap-3">
+            <div className="flex flex-col gap-3 rounded-lg border border-gray-200 bg-white p-5 shadow-sm">
+              <h3 className="font-semibold text-gray-800">Shipping Details</h3>
+              <div>
+                <label className="mb-1 block text-xs font-medium text-gray-700">Email Address *</label>
                 <input
-                  name="full_name"
-                  placeholder="Full name"
+                  name="email"
+                  type="email"
+                  placeholder="name@example.com (for order updates & tracking)"
                   required
-                  value={guestForm.full_name}
+                  value={guestForm.email}
                   onChange={handleGuestFormChange}
-                  className={guestInputClass}
-                />
-                <input
-                  name="phone"
-                  placeholder="Phone"
-                  required
-                  value={guestForm.phone}
-                  onChange={handleGuestFormChange}
-                  className={guestInputClass}
+                  className={`w-full ${guestInputClass}`}
                 />
               </div>
-              <input
-                name="address_line_1"
-                placeholder="Address line 1"
-                required
-                value={guestForm.address_line_1}
-                onChange={handleGuestFormChange}
-                className={guestInputClass}
-              />
-              <input
-                name="address_line_2"
-                placeholder="Address line 2 (optional)"
-                value={guestForm.address_line_2}
-                onChange={handleGuestFormChange}
-                className={guestInputClass}
-              />
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <div>
+                  <label className="mb-1 block text-xs font-medium text-gray-700">Full Name *</label>
+                  <input
+                    name="full_name"
+                    placeholder="Full name"
+                    required
+                    value={guestForm.full_name}
+                    onChange={handleGuestFormChange}
+                    className={`w-full ${guestInputClass}`}
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs font-medium text-gray-700">Phone (10 Digits) *</label>
+                  <input
+                    name="phone"
+                    type="tel"
+                    maxLength={10}
+                    placeholder="10-digit mobile number"
+                    required
+                    value={guestForm.phone}
+                    onChange={handleGuestFormChange}
+                    className={`w-full ${guestInputClass}`}
+                  />
+                  {guestForm.phone && !isGuestPhoneValid(guestForm.phone) && (
+                    <p className="mt-1 text-xs text-red-600">Enter a valid 10-digit mobile number</p>
+                  )}
+                </div>
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-medium text-gray-700">Address Line 1 *</label>
                 <input
-                  name="city"
-                  placeholder="City"
+                  name="address_line_1"
+                  placeholder="House / Flat No., Building, Street, Area"
                   required
-                  value={guestForm.city}
+                  value={guestForm.address_line_1}
                   onChange={handleGuestFormChange}
-                  className={guestInputClass}
+                  className={`w-full ${guestInputClass}`}
                 />
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-medium text-gray-700">Address Line 2 (Optional)</label>
                 <input
-                  name="state"
-                  placeholder="State"
-                  required
-                  value={guestForm.state}
+                  name="address_line_2"
+                  placeholder="Landmark, Apartment, Suite"
+                  value={guestForm.address_line_2}
                   onChange={handleGuestFormChange}
-                  className={guestInputClass}
+                  className={`w-full ${guestInputClass}`}
                 />
-                <input
-                  name="postal_code"
-                  placeholder="Postal code"
-                  required
-                  value={guestForm.postal_code}
-                  onChange={handleGuestFormChange}
-                  className={guestInputClass}
-                />
+              </div>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                <div>
+                  <label className="mb-1 block text-xs font-medium text-gray-700">City *</label>
+                  <input
+                    name="city"
+                    placeholder="City / District"
+                    required
+                    value={guestForm.city}
+                    onChange={handleGuestFormChange}
+                    className={`w-full ${guestInputClass}`}
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs font-medium text-gray-700">State *</label>
+                  <input
+                    name="state"
+                    placeholder="State"
+                    required
+                    value={guestForm.state}
+                    onChange={handleGuestFormChange}
+                    className={`w-full ${guestInputClass}`}
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs font-medium text-gray-700">PIN Code (6 Digits) *</label>
+                  <input
+                    name="postal_code"
+                    type="text"
+                    maxLength={6}
+                    placeholder="6-digit PIN code"
+                    required
+                    value={guestForm.postal_code}
+                    onChange={handleGuestFormChange}
+                    className={`w-full ${guestInputClass}`}
+                  />
+                  {guestForm.postal_code && !isGuestPinValid(guestForm.postal_code) && (
+                    <p className="mt-1 text-xs text-red-600">Enter a valid 6-digit PIN code</p>
+                  )}
+                </div>
               </div>
             </div>
           )}
@@ -433,10 +499,6 @@ function CheckoutPage() {
             <div className="flex justify-between text-gray-600">
               <span>Shipping</span>
               <span>{shippingCost === 0 ? "Free" : `₹${shippingCost}`}</span>
-            </div>
-            <div className="flex justify-between text-gray-600">
-              <span>Tax (18% GST)</span>
-              <span>₹{tax.toLocaleString("en-IN")}</span>
             </div>
             {codFee > 0 && (
               <div className="flex justify-between text-gray-600">
@@ -516,7 +578,7 @@ function CheckoutPage() {
 
           <div className="flex flex-col gap-2 rounded-lg bg-brand-surface p-4 text-sm text-brand">
             <div className="flex justify-between">
-              <span>Subtotal + shipping + tax</span>
+              <span>Subtotal + shipping</span>
               <span>₹{(total - codFee).toLocaleString("en-IN")}</span>
             </div>
             {codFee > 0 && (

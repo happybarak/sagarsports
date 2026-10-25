@@ -1,5 +1,6 @@
 from datetime import timedelta
 from decimal import Decimal
+import re
 
 from django.db import transaction
 from django.db.models import Count, DecimalField, ExpressionWrapper, F, Sum
@@ -26,10 +27,10 @@ from apps.users.models import Address
 
 FREE_SHIPPING_THRESHOLD = Decimal("5000.00")
 FLAT_SHIPPING_COST = Decimal("99.00")
-TAX_RATE = Decimal("0.18")  # 18% GST
+TAX_RATE = Decimal("0.00")  # No tax/GST
 
 
-COD_FEE = Decimal("100.00")  # flat Cash-on-Delivery handling charge (Rs 100)
+COD_FEE = Decimal("50.00")  # flat Cash-on-Delivery handling charge (Rs 50)
 
 
 def parse_payment_method(request):
@@ -58,7 +59,7 @@ def calculate_order_totals(subtotal, payment_method=Order.PaymentMethod.ONLINE):
     independently rather than trusting whatever the client sends).
     """
     shipping_cost = Decimal("0.00") if subtotal >= FREE_SHIPPING_THRESHOLD else FLAT_SHIPPING_COST
-    tax = (subtotal * TAX_RATE).quantize(Decimal("0.01"))
+    tax = Decimal("0.00")  # No GST
     discount = Decimal("0.00")  # no promo/coupon system
     cod_fee = COD_FEE if payment_method == Order.PaymentMethod.COD else Decimal("0.00")
     total = subtotal + shipping_cost + tax + cod_fee - discount
@@ -208,6 +209,32 @@ class OrderListCreateView(generics.ListAPIView):
                     "success": False,
                     "message": "Missing required checkout information.",
                     "errors": {field: "This field is required." for field in missing},
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        phone = re.sub(r"[\s\-+]", "", str(data.get("shipping_phone", "")).strip())
+        if phone.startswith("91") and len(phone) == 12:
+            phone = phone[2:]
+        elif phone.startswith("0") and len(phone) == 11:
+            phone = phone[1:]
+        if not re.match(r"^[6-9]\d{9}$", phone):
+            return Response(
+                {
+                    "success": False,
+                    "message": "Enter a valid 10-digit mobile number.",
+                    "errors": {"shipping_phone": "Enter a valid 10-digit mobile number."},
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        postal_code = str(data.get("shipping_postal_code", "")).strip()
+        if not re.match(r"^\d{6}$", postal_code):
+            return Response(
+                {
+                    "success": False,
+                    "message": "Enter a valid 6-digit PIN code.",
+                    "errors": {"shipping_postal_code": "Enter a valid 6-digit PIN code."},
                 },
                 status=status.HTTP_400_BAD_REQUEST,
             )
