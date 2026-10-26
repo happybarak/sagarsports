@@ -201,8 +201,12 @@ EMAIL_TIMEOUT = config("EMAIL_TIMEOUT", default=10, cast=int)
 EMAIL_HOST_USER = config("EMAIL_HOST_USER", default="")
 EMAIL_HOST_PASSWORD = config("EMAIL_HOST_PASSWORD", default="")
 
-DEFAULT_FROM_EMAIL = config("DEFAULT_FROM_EMAIL", default="SagarSports <happybarak@gmail.com>")
-ADMIN_NOTIFICATION_EMAIL = config("ADMIN_NOTIFICATION_EMAIL", default="happybarak7@gmail.com")
+DEFAULT_FROM_EMAIL = config(
+    "DEFAULT_FROM_EMAIL", default="sagarsports.orders@gmail.com"
+)
+ADMIN_NOTIFICATION_EMAIL = config(
+    "ADMIN_NOTIFICATION_EMAIL", default="sagarsports.shop@gmail.com"
+)
 
 # Brevo HTTP API Configuration (Bypasses Render Free Tier outbound SMTP port 587 block)
 BREVO_API_KEY = config("BREVO_API_KEY", default="")

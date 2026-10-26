@@ -253,7 +253,7 @@ https://sagarsports.shop
     </html>
     """
 
-    from_email = getattr(settings, "DEFAULT_FROM_EMAIL", "Sagar Sports <orders@sagarsports.shop>")
+    from_email = getattr(settings, "DEFAULT_FROM_EMAIL", None)
     admin_reply_raw = getattr(settings, "ADMIN_NOTIFICATION_EMAIL", None)
     reply_to = (
         [r.strip() for r in admin_reply_raw.split(",") if r.strip()]
@@ -273,11 +273,7 @@ https://sagarsports.shop
 
 
 def _send_admin_new_order_alert(order):
-    admin_emails_raw = getattr(
-        settings,
-        "ADMIN_NOTIFICATION_EMAIL",
-        getattr(settings, "DEFAULT_FROM_EMAIL", "orders@sagarsports.shop"),
-    )
+    admin_emails_raw = getattr(settings, "ADMIN_NOTIFICATION_EMAIL", None)
     if not admin_emails_raw:
         return
 
@@ -335,7 +331,7 @@ View in Admin Panel:
 {admin_order_url}
 """
 
-    from_email = getattr(settings, "DEFAULT_FROM_EMAIL", "Sagar Sports <orders@sagarsports.shop>")
+    from_email = getattr(settings, "DEFAULT_FROM_EMAIL", None)
     _send_email_message(
         subject=subject,
         text_body=text_body,
@@ -358,27 +354,33 @@ def _send_email_message(subject, text_body, html_body, from_email, recipients, r
 
     brevo_api_key = getattr(settings, "BREVO_API_KEY", "")
 
+    sender_name = "SagarSports Orders"
+    sender_email = getattr(settings, "EMAIL_HOST_USER", "")
+    from_email_str = (from_email or getattr(settings, "DEFAULT_FROM_EMAIL", "") or "").strip()
+    match = re.match(r"^(.*?)\s*<(.+?)>$", from_email_str)
+    if match:
+        sender_name = match.group(1).strip() or sender_name
+        sender_email = match.group(2).strip()
+    elif "@" in from_email_str:
+        sender_email = from_email_str
+
+    if not sender_email or "@" not in sender_email:
+        default_from = (getattr(settings, "DEFAULT_FROM_EMAIL", "") or "").strip()
+        sub_match = re.match(r"^(.*?)\s*<(.+?)>$", default_from)
+        if sub_match:
+            sender_name = sub_match.group(1).strip() or sender_name
+            sender_email = sub_match.group(2).strip()
+        elif "@" in default_from:
+            sender_email = default_from
+
+    formatted_from = (
+        f"{sender_name} <{sender_email}>"
+        if sender_name and sender_email and "<" not in from_email_str
+        else from_email_str
+    )
+
     if brevo_api_key:
         try:
-            sender_name = "Sagar Sports"
-            sender_email = getattr(settings, "EMAIL_HOST_USER", "")
-            match = re.match(r"^(.*?)\s*<(.+?)>$", from_email.strip())
-            if match:
-                sender_name = match.group(1).strip() or sender_name
-                sender_email = match.group(2).strip()
-            elif "@" in from_email:
-                sender_email = from_email.strip()
-
-            if not sender_email or "@" not in sender_email:
-                default_from = getattr(settings, "DEFAULT_FROM_EMAIL", "")
-                sub_match = re.match(r"^(.*?)\s*<(.+?)>$", default_from.strip())
-                if sub_match:
-                    sender_email = sub_match.group(2).strip()
-                elif "@" in default_from:
-                    sender_email = default_from.strip()
-                else:
-                    sender_email = "support@sagarsports.shop"
-
             to_list = [{"email": r.strip()} for r in recipients if r and "@" in r]
             if not to_list:
                 logger.warning("No valid recipients for email: %s", recipients)
@@ -420,7 +422,7 @@ def _send_email_message(subject, text_body, html_body, from_email, recipients, r
 
     # Standard Django SMTP fallback
     try:
-        msg = EmailMultiAlternatives(subject, text_body, from_email, recipients, reply_to=reply_to)
+        msg = EmailMultiAlternatives(subject, text_body, formatted_from, recipients, reply_to=reply_to)
         if html_body:
             msg.attach_alternative(html_body, "text/html")
         msg.send(fail_silently=False)

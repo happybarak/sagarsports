@@ -324,8 +324,9 @@ npm run dev
 | `EMAIL_PORT` | SMTP port | `587` |
 | `EMAIL_HOST_USER` | SMTP login user | `your-brevo-login` |
 | `EMAIL_HOST_PASSWORD` | SMTP password | `your-brevo-smtp-key` |
-| `DEFAULT_FROM_EMAIL` | Default sender address | `Sagar Sports <orders@sagarsports.shop>` |
-| `BREVO_API_KEY` | Brevo REST API key (fallback for blocked SMTP) | `xkeysib-...` |
+| `DEFAULT_FROM_EMAIL` | Default sender address | `sagarsports.orders@gmail.com` |
+| `ADMIN_NOTIFICATION_EMAIL` | Admin order notifications recipient | `sagarsports.shop@gmail.com` |
+| `BREVO_API_KEY` | Brevo REST API key (fallback for blocked SMTP) | `your_brevo_api_key` |
 | `RAZORPAY_KEY_ID` | Razorpay Key ID | `rzp_test_...` |
 | `RAZORPAY_KEY_SECRET` | Razorpay Key Secret | `your-razorpay-secret` |
 | `RAZORPAY_WEBHOOK_SECRET` | Razorpay Webhook Signing Secret | `your-webhook-secret` |
